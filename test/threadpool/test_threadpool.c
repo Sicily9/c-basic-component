@@ -15,6 +15,9 @@ int main()
 {
 	Name a;
 	name__init(&a);
+
+	printf("class name: %s\n", a.base.descriptor->name);
+
 	a.name = malloc(10);
 	strcpy(a.name, "hello");
 	
