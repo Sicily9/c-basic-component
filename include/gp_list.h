@@ -1,5 +1,5 @@
-#ifndef GP_LIST_H
-#define GP_LIST_H
+#ifndef __GP_LIST_H__
+#define __GP_LIST_H__
 
 #include <stdint.h>
 
