@@ -1,5 +1,5 @@
-#ifndef __BASE_XC_THREAD_H__
-#define __BASE_XC_THREAD_H__
+#ifndef __GP_THREAD_H__
+#define __GP_THREAD_H__
 
 #include <pthread.h>
 #include <stdio.h>
@@ -7,17 +7,17 @@
 
 #define gp_tmr_finish(m) \
 do{\
-	m->ops->finish(m);\
+	(m)->ops->finish(m);\
 }while(0) \
 
 #define gp_tmr_wait(m) \
 do{\
-	m->ops->wait(m);\
+	(m)->ops->wait(m);\
 }while(0) \
 
 #define gp_tmr_run(m) \
 do{\
-	m->ops->run(m);\
+	(m)->ops->run(m);\
 }while(0) \
 
 #define gp_mtx_lock(m) \
