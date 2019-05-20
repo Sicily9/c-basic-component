@@ -25,7 +25,7 @@ typedef struct gp_taskp_tmr {
 	struct gp_thread_manager tpt_thread;
 }gp_taskp_tmr;
 
-
+//TODO: priority queue
 // a threadpool
 typedef struct gp_task_processor {
 	struct gp_list	     tp_tasks;
