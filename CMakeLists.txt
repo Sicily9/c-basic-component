@@ -14,6 +14,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 add_subdirectory(test/thread)
 add_subdirectory(test/list)
 add_subdirectory(test/threadpool)
+add_subdirectory(test/dict)
 
 
 add_subdirectory(base)
