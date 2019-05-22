@@ -98,6 +98,7 @@ struct gp_thread_manager {
 	gp_thread_mgr_operations *ops;
 };
 
+/*API*/
 extern void create_gp_thr_manager(struct gp_thread_manager **gp_tmr, gp_thread_fn fn, void *arg);
 extern int init_gp_thr_manager(struct gp_thread_manager *gp_tmr, gp_thread_fn fn, void *arg);
 extern void destroy_gp_thr_manager(struct gp_thread_manager *gp_tmr);
