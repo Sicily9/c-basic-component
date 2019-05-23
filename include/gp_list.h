@@ -2,6 +2,7 @@
 #define __GP_LIST_H__
 
 #include <stdint.h>
+#include <stdio.h>
 
 //doubly list
 typedef struct gp_list_node {
