@@ -1,14 +1,7 @@
-aux_source_directory(thread DIR_SRCS)
-#MESSAGE(STATUS "Src file: ${DIR_SRCS}")
-
-aux_source_directory(list DIR_SRCS)
-#MESSAGE(STATUS "Src file: ${DIR_SRCS}")
-
-aux_source_directory(threadpool DIR_SRCS)
-#MESSAGE(STATUS "Src file: ${DIR_SRCS}")
-
-aux_source_directory(dictionary DIR_SRCS)
-#MESSAGE(STATUS "Src file: ${DIR_SRCS}")
+aux_source_directory(common/thread DIR_SRCS)
+aux_source_directory(common/list DIR_SRCS)
+aux_source_directory(common/dictionary DIR_SRCS)
+aux_source_directory(advanced/threadpool DIR_SRCS)
 
 add_library (base SHARED ${DIR_SRCS})
 
