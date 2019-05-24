@@ -51,6 +51,127 @@ uint64_t dictGenCaseHashFunction(const unsigned char *buf, int len) {
     return siphash_nocase(buf,len,dict_hash_function_seed);
 }
 
+/* ----------------------------- Type define --------------------------------*/
+
+uint64_t hashCallbackString(const void *key) {
+	return dictGenHashFunction((unsigned char*)key, strlen((char *)key));
+}
+
+int compareCallbackString(void *privdata, const void *key1, const void *key2){
+	int l1,l2;
+	DICT_NOTUSED(privdata);
+
+	l1 = strlen((char*)key1);
+	l2 = strlen((char*)key2);
+
+	if(l1 != l2) return 0;
+
+	return memcmp(key1, key2, l1) == 0;
+}
+
+void * keyDupString(void *privdata, const void *key){
+	DICT_NOTUSED(privdata);
+	int size = strlen((char *)key) + 1;
+	char *tmp = malloc(size);
+	strcpy(tmp, (char *)key);
+	return tmp;
+}
+
+void * keyDupInt(void *privdata, const void *key){
+	DICT_NOTUSED(privdata);
+	int *tmp = malloc(sizeof(int));
+	*tmp = *(int *)key;
+	return tmp;
+}
+
+void * valDupString(void *privdata, const void * obj){
+	DICT_NOTUSED(privdata);
+	int size = strlen((char *)obj) + 1;
+	char *tmp = malloc(size);
+	strcpy(tmp, (char *)obj);
+	return tmp;
+	return NULL;
+}
+
+void * valDupInt(void *privdata, const void * obj){
+	DICT_NOTUSED(privdata);
+	int *tmp = malloc(sizeof(int));
+	*tmp = *(int *)obj;
+	return tmp;
+	return NULL;
+}
+
+uint64_t hashCallbackInt(const void *key) {
+	return dictGenHashFunction((unsigned char*)key, sizeof(int));
+}
+
+int compareCallbackInt(void *privdata, const void *key1, const void *key2){
+	int l1 = *(int *)key1;
+	int l2 = *(int *)key2;
+
+	if(l1 != l2) 
+		return 0;
+	return 1;
+}
+
+void freeCallback(void *privdata, void *val) {
+	DICT_NOTUSED(privdata);
+	free(val);
+}
+
+dictType IntStringDictType = {
+	hashCallbackInt,
+	keyDupInt,
+	valDupString,
+	compareCallbackInt,
+	freeCallback,
+	NULL
+};
+
+dictType IntIntDictType = {
+	hashCallbackInt,
+	keyDupInt,
+	valDupInt,
+	compareCallbackInt,
+	freeCallback,
+	NULL
+};
+
+dictType StringStringDictType = {
+	hashCallbackString,
+	keyDupString,
+	valDupString,
+	compareCallbackString,
+	freeCallback,
+	NULL
+};
+
+dictType StringIntDictType = {
+	hashCallbackString,
+	keyDupString,
+	valDupInt,
+	compareCallbackString,
+	freeCallback,
+	NULL
+};
+
+dictType IntDictType = {
+	hashCallbackInt,
+	keyDupInt,
+	NULL,
+	compareCallbackInt,
+	freeCallback,
+	NULL
+};
+
+dictType StringDictType = {
+	hashCallbackString,
+	keyDupString,
+	NULL,
+	compareCallbackString,
+	freeCallback,
+	NULL
+};
 /* ----------------------------- API implementation ------------------------- */
 
 /* Reset a hash table already initialized with ht_init().
@@ -63,8 +184,26 @@ static void _dictReset(dictht *ht)
     ht->used = 0;
 }
 
+dict *dictCreate(int key_type, int value_type){
+	dict *dt = NULL;
+	if(key_type == INT_DICT && value_type == INT_DICT){
+		dt =_dictCreate(&IntIntDictType, NULL);
+	}else if(key_type == INT_DICT && value_type == STRING_DICT){
+		dt =_dictCreate(&IntStringDictType, NULL);
+	}else if(key_type == STRING_DICT && value_type == INT_DICT){
+		dt =_dictCreate(&StringIntDictType, NULL);
+	}else if(key_type == STRING_DICT && value_type == STRING_DICT){
+		dt =_dictCreate(&StringStringDictType, NULL);
+	}else if(key_type == STRING_DICT && value_type == 0){
+		dt =_dictCreate(&StringDictType, NULL);
+	}else if(key_type == INT_DICT && value_type == 0){
+		dt =_dictCreate(&IntDictType, NULL);
+	}
+	return dt;
+}
+
 /* Create a new hash table */
-dict *dictCreate(dictType *type,
+dict *_dictCreate(dictType *type,
         void *privDataPtr)
 {
     dict *d = malloc(sizeof(*d));

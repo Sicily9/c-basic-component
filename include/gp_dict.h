@@ -9,6 +9,10 @@
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
 
+enum {
+	INT_DICT = 1,
+	STRING_DICT,
+};
 typedef struct dictEntry {
     void *key;
     union {
@@ -113,7 +117,8 @@ typedef void (dictScanBucketFunction)(void *privdata, dictEntry **bucketref);
 #define dictIsRehashing(d) ((d)->rehashidx != -1)
 
 /* API */
-extern dict *dictCreate(dictType *type, void *privDataPtr);
+extern dict *dictCreate(int key_type, int value_type);
+extern dict *_dictCreate(dictType *type, void *privDataPtr);
 extern int dictExpand(dict *d, unsigned long size);
 extern int dictAdd(dict *d, void *key, void *val);
 extern dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing);

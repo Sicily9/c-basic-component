@@ -51,11 +51,30 @@ dictType BenchmarkDictType = {
     printf(msg ": %ld items in %lld ms\n", count, elapsed); \
 } while(0);
 
+dict * dict2 = NULL;
+void __attribute((constructor))__func(void){
+	char a[10];
+	strcpy(a, "123456");
+
+	int b =3;
+
+	dict2 =dictCreate(STRING_DICT, 0);
+	int ret = dictAdd(dict2, a, &b);
+	assert(ret == DICT_OK);
+}
+
+void func1(void){
+    int a = *(int *)dictFetchValue(dict2, "123456");
+    printf("a:%d\n", a);
+}
+
 /* dict-benchmark [count] */
 int main(int argc, char **argv) {
+	//func();
+	func1();
     long j;
     long long start, elapsed;
-    dict *dict = dictCreate(&BenchmarkDictType,NULL);
+    dict *dict = _dictCreate(&BenchmarkDictType,NULL);
     long count = 0; 
 
     if (argc == 2) { 
