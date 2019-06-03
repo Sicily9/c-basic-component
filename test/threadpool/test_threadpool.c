@@ -3,7 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "gp_threadpool.h"
-#include "task.pb-c.h"
+#include "proto.h"
 
 
 void func2(void *arg)
@@ -26,6 +26,13 @@ int main()
 	a.name = malloc(10);
 	strcpy(a.name, "i am a");
 	
+	char *c =NULL;
+	int size = encode((ProtobufCMessage *)&a, &c);
+	
+	ProtobufCMessage * p = decode("Name", size, c);
+	printf("name :%s\n", ((Name *)p)->name);
+
+	free(c);
 
 	Name b;
 	name__init(&b);
