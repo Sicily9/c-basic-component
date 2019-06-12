@@ -119,6 +119,17 @@ void gp_list_remove(gp_list *list, void *item)
         node->ln_prev          = NULL;
 }
 
+void gp_list_replace(gp_list *old, gp_list *new)
+{
+
+        new->ll_head.ln_next = old->ll_head.ln_next;
+        new->ll_head.ln_next->ln_prev = &new->ll_head;
+        new->ll_head.ln_prev = old->ll_head.ln_prev;
+        new->ll_head.ln_prev->ln_next = &new->ll_head;
+
+		new->ll_offset = old->ll_offset;
+}
+
 int gp_list_active(gp_list *list, void *item)
 {
         gp_list_node *node = NODE(list, item);

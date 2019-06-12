@@ -15,7 +15,7 @@ add_subdirectory(test/thread)
 add_subdirectory(test/list)
 add_subdirectory(test/threadpool)
 add_subdirectory(test/dict)
-add_subdirectory(test/module)
+#add_subdirectory(test/module)
 
 
 add_subdirectory(base)

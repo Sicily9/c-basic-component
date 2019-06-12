@@ -33,12 +33,14 @@ extern void  gp_list_append(struct gp_list *, void *);
 extern void  gp_list_prepend(struct gp_list *, void *); 
 extern void  gp_list_insert_before(struct gp_list *, void *, void *); 
 extern void  gp_list_insert_after(struct gp_list *, void *, void *); 
+extern void  gp_list_replace(struct gp_list *, struct gp_list *); 
 extern void *gp_list_next(const struct gp_list *, void *); 
 extern void *gp_list_prev(const struct gp_list *, void *); 
 extern void  gp_list_remove(struct gp_list *, void *); 
 extern int   gp_list_active(struct gp_list *, void *); 
 extern int   gp_list_empty(struct gp_list *); 
 extern int   gp_list_node_active(struct gp_list_node *); 
+extern void   gp_list_node_remove(struct gp_list_node *); 
 
 #define GP_LIST_FOREACH(l, it) \
         for (it = gp_list_first(l); it != NULL; it = gp_list_next(l, it))
