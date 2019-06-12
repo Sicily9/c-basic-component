@@ -179,7 +179,7 @@ void destruct_gp_timer_base(gp_timer_base *base)
 	free(base);
 }
 
-static int cascade(tvec *tv, int index)
+static void cascade(tvec *tv, int index)
 {
 	gp_list tmp;
 	GP_LIST_INIT(&tmp, gp_timer_list, node);

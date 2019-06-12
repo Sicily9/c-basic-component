@@ -14,8 +14,7 @@
 #define INDEX(C,N) (((C)->timer_jiffies >> (TVR_BITS + (N) * TVN_BITS)) & TVN_MASK)
 
 
-typedef enum {
-	GP_CLOCK_PRECISE = 0, GP_CLOCK_FAST = 1
+typedef enum { GP_CLOCK_PRECISE = 0, GP_CLOCK_FAST = 1
 }gp_clocktype_t;
 
 typedef struct tvec_t {
