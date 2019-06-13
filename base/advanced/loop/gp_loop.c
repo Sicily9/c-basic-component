@@ -94,11 +94,11 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	int ran_pending;
 	unsigned long timeout;
 	while(loop->stop_flag == 0){
-		gp_loop_update_time(loop);
+		gp_loop_update_time(loop); 
 		gp_loop_run_timers(loop);
 		timeout = 0;
 		if((mode == GP_RUN_ONCE && !ran_pending) || mode == GP_RUN_DEFAULT)
-			timeout = loop->timer_base->next_timer;
+			timeout = loop->timer_base->next_timer - loop->timer_base;
 
 		gp_io_poll(loop, timeout);
 		

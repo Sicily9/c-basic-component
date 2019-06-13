@@ -60,6 +60,64 @@ void destruct_gp_timer(gp_timer_list *timer)
 	free(timer);
 }
 
+
+static unsigned long gp_next_timer(gp_timer_base *base)
+{
+	unsigned long timer_jiffies = base->timer_jiffies;
+	unsigned long expires = MAX_TVAL;
+	
+	int index, slot, array, found = 0;
+	gp_timer_list *timer;
+	tvec *varray[4];
+
+	index = slot = timer_jiffies & TVR_MASK;
+	do {
+		GP_LIST_FOREACH(base->tv1.vec+slot, timer){
+			found = 1;
+			expires =timer->expires;
+
+			if(!index || slot < index)
+				goto cascade;
+			return expires;
+		}
+		slot = (slot + 1) & TVR_MASK;
+	}while(slot != index);
+
+cascade:
+	if (index)
+       timer_jiffies += TVR_SIZE - index;
+    timer_jiffies >>= TVR_BITS;
+
+    /* Check tv2-tv5. */
+    varray[0] = &base->tv2;
+    varray[1] = &base->tv3;
+    varray[2] = &base->tv4;
+    varray[3] = &base->tv5;
+
+    for (array = 0; array < 4; array++) {
+        tvec *varp = (tvec *)varray[array];
+        index = slot = timer_jiffies & TVN_MASK;
+        do {
+            GP_LIST_FOREACH(varp->vec+slot, timer) {
+                found = 1; 
+                if ((long)(timer->expires - expires) < 0)
+                    expires = timer->expires;
+            }
+            if (found) {
+                if (!index || slot < index)
+                    break;
+                return expires;
+            }
+            slot = (slot + 1) & TVN_MASK;
+        } while (slot != index);
+
+        if (index)
+            timer_jiffies += TVN_SIZE - index;
+        timer_jiffies >>= TVN_BITS;
+    }
+    return expires;
+}
+
 static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
 {
 	unsigned long expires = timer->expires;
@@ -90,13 +148,8 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
         vec = base->tv5.vec + i;
     }
 
-
-	if((long)(expires - base->timer_next) < 0){
-		base->timer_next = expires;
-	}
-
     gp_list_append(vec, &timer->node);
-
+	base->next_timer = gp_next_timer(base);
 	timer->base = base;
 }
 
@@ -226,6 +279,7 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 		
 		GP_LIST_FOREACH(&tmp, timer){
 			gp_list_node_remove(&timer->node);
+			base->next_timer = gp_next_timer(base);
 			timer->base = NULL;
 			if (timer->callback) 
 				timer->callback(timer->data);
@@ -233,4 +287,5 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 
 	}
 }
+
 
