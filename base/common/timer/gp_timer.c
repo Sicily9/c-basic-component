@@ -89,6 +89,12 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
         i = (expires >> (TVR_BITS + 3 * TVN_BITS)) & TVN_MASK;
         vec = base->tv5.vec + i;
     }
+
+
+	if((long)(expires - base->timer_next) < 0){
+		base->timer_next = expires;
+	}
+
     gp_list_append(vec, &timer->node);
 
 	timer->base = base;
@@ -130,7 +136,7 @@ void init_gp_timer_base(gp_timer_base *base, unsigned long jiffies)
 {
 	int i = 0;
 	base->timer_jiffies = jiffies;
-	base->next_timer = 0;
+	base->next_timer = MAX_TVAL;
 	for (i = 0; i < TVR_SIZE; i++) {
 		GP_LIST_INIT(&base->tv1.vec[i], gp_timer_list, node);
 	}
@@ -195,7 +201,7 @@ static void cascade(tvec *tv, int index)
 void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 {
 	gp_timer_list *timer =NULL;
-	while( (unsigned long)(jiffies - base->timer_jiffies) >= 0){
+	while( (long)(jiffies - base->timer_jiffies) >= 0){
 		gp_list tmp;
 		GP_LIST_INIT(&tmp, gp_timer_list, node);
 		int index = base->timer_jiffies & TVR_MASK;
