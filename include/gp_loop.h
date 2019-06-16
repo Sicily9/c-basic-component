@@ -12,7 +12,7 @@ typedef void (*gp_io_cb)(struct gp_loop_s *loop, struct gp_io_s *w, unsigned int
 
 typedef enum {
 	GP_RUN_DEFAULT = 0,
-	GP_RUN_ONCEM,
+	GP_RUN_ONCE,
 	GP_RUN_NOWAIT
 }gp_run_mode;
 
@@ -46,7 +46,7 @@ extern void create_gp_io(gp_io **w, gp_io_cb cb, int fd);
 extern void init_gp_io(gp_io *w, gp_io_cb cb, int fd);
 extern void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events);
 extern void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events);
-extern int  gp_io_poll(gp_loop *loop, int timeout);
+extern void gp_io_poll(gp_loop *loop, unsigned long timeout);
 
 
 extern int create_gp_loop(gp_loop **loop);
@@ -54,7 +54,7 @@ extern int init_gp_loop(gp_loop *loop);
 //extern int gp_loop_alive(gp_loop *loop);
 extern int gp_loop_run(gp_loop *loop, gp_run_mode mode);
 
-extern void gp_loop_timer_start(gp_loop *loop, gp_timer_list *timer, unsigned long expires);
+extern void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, unsigned long expires);
 extern void gp_loop_timer_stop(gp_loop *loop, gp_timer_list *timer);
 extern void gp_loop_timer_mod(gp_loop *loop, gp_timer_list *timer, unsigned long expires);
 extern void gp_loop_run_timers(gp_loop *loop);

@@ -278,9 +278,8 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 		gp_list_replace(base->tv1.vec + index, &tmp);
 		
 		GP_LIST_FOREACH(&tmp, timer){
-			gp_list_node_remove(&timer->node);
+			gp_timer_del(base, timer);
 			base->next_timer = gp_next_timer(base);
-			timer->base = NULL;
 			if (timer->callback) 
 				timer->callback(timer->data);
 		}

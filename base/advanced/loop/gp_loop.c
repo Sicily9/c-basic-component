@@ -1,10 +1,14 @@
 #include "gp_loop.h"
-#include "stdlib.h"
-#include "string.h"
-/*-----------------------------timer------------------------------------*/
-
-void gp_loop_timer_start(gp_loop *loop, gp_timer_list *timer, unsigned long expires)
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/epoll.h>
+/*-----------------------------timer------------------------------------*/ 
+void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, unsigned long expires)
 {
+	gp_timer_list *timer = NULL;
+	create_gp_timer(&timer, fn, data);
 	gp_timer_add(loop->timer_base, timer, expires);
 }
 
@@ -27,7 +31,7 @@ void gp_loop_run_timers(gp_loop *loop)
 
 void gp_loop_update_time(gp_loop *loop)
 {
-	loop->time = gp_update_time(GP_CLOCK_FAST);
+	loop->time = gp_time(GP_CLOCK_FAST);
 }
 
 /*--------------------------------------gp_io---------------------------------------*/
@@ -49,7 +53,7 @@ static void maybe_resize(gp_loop *loop, unsigned int len)
  	gp_io** watchers;
   	void* fake_watcher_list;
   	void* fake_watcher_count;
-        unsigned int nwatchers;
+    unsigned int nwatchers;
   	unsigned int i;
 
   	if (len <= loop->nwatchers)
@@ -68,7 +72,7 @@ static void maybe_resize(gp_loop *loop, unsigned int len)
   	watchers = realloc(loop->watchers,
            (nwatchers + 2) * sizeof(loop->watchers[0]));
 
-	if(watcher == NULL)
+	if(watchers == NULL)
 		return;
 
   	for (i = loop->nwatchers; i < nwatchers; i++) 
@@ -124,7 +128,7 @@ void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events)
 	if(w->pevents == 0){
 		gp_list_node_remove(&w->watcher_node);
 		if(loop->watchers[w->fd] != NULL){
-			loop->watchers[w->fd] == NULL;
+			loop->watchers[w->fd] = NULL;
 			loop->nfds--;
 			w->events = 0;
 		}
@@ -134,8 +138,137 @@ void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events)
 
 void gp_io_poll(gp_loop *loop, unsigned long timeout)
 {
+	static const int max_safe_timeout = MAX_TVAL;
+ 	struct epoll_event events[1024];
+  	struct epoll_event* pe;
+  	struct epoll_event e;
+  	int real_timeout;
+  	gp_io* w;
+  	uint64_t base;
+  	int nevents;
+  	int count;
+  	int nfds;
+  	int fd;
+  	int op;
+  	int i;
+
+  	if (loop->nfds == 0) { 
+    		return;
+  	}
+
+  	memset(&e, 0, sizeof(e));
+
+	//take out the epoll event from the loop watcher list and insert into
+	//the rb-tree
+	GP_LIST_FOREACH(&loop->watcher_list, w){
+    	e.events = w->pevents;
+    	e.data.fd = w->fd;
+		if (w->events == 0)
+ 			op = EPOLL_CTL_ADD;
+    	else
+      		op = EPOLL_CTL_MOD;
+
+    	if (epoll_ctl(loop->backend_fd, op, w->fd, &e)) {
+      		if (errno != EEXIST)
+        		abort();
+
+      		if (epoll_ctl(loop->backend_fd, EPOLL_CTL_MOD, w->fd, &e))
+        		abort();
+		}
+
+		w->events = w->pevents;
+	}
+
+	base = loop->time;
+	count = 48;
+	real_timeout = timeout;
+
+	for(;;) {
+		if(sizeof(int) == sizeof(long) && timeout >= max_safe_timeout)
+			timeout = max_safe_timeout;
+
+		nfds = epoll_wait(loop->backend_fd, 
+				   events, 
+				   sizeof(events)/sizeof(events[0]), 
+				   timeout
+				   );
+
+		gp_loop_update_time(loop);
+
+		if (nfds == 0) { 
+      			if (timeout == 0)
+        			return;
+      			goto update_timeout;
+    		}
+
+    		if (nfds == -1) {
+      			if (errno != EINTR)
+        			abort();
+
+      			if (timeout == -1)
+        			continue;
+
+      			if (timeout == 0)
+        			return;
+
+      			goto update_timeout;
+    		}
+
+	}
+	nevents = 0;
+	loop->watchers[loop->nwatchers] = (void*) events;
+    	loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
+    	for (i = 0; i < nfds; i++) {
+      		pe = events + i;
+      		fd = pe->data.fd;
+
+      		if (fd == -1)
+        		continue;
 
 
+ 	        w = loop->watchers[fd];
+
+  	        if (w == NULL) {
+        		epoll_ctl(loop->backend_fd, EPOLL_CTL_DEL, fd, pe);
+        		continue;
+      		}
+		
+		pe->events &= w->pevents | EPOLLERR | EPOLLHUP;
+		if (pe->events == EPOLLERR || pe->events == EPOLLHUP){
+        	      	pe->events |= w->pevents & 
+				(EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI);
+		}
+    		if (pe->events != 0) {
+          		w->cb(loop, w, pe->events);
+
+        	nevents++;
+
+	}
+    	loop->watchers[loop->nwatchers] = NULL;
+    	loop->watchers[loop->nwatchers + 1] = NULL;
+
+
+    	if (nevents != 0) {
+      		if (nfds == sizeof(events)/sizeof(events[0]) && --count != 0) {
+        		timeout = 0;
+        		continue;
+      		}
+      		return;
+    	}
+
+    	if (timeout == 0)
+      		return;
+
+    	if (timeout == -1)
+      		continue;
+
+update_timeout:
+    	real_timeout -= (loop->time - base);
+    	if (real_timeout <= 0)
+      		return;
+
+    	timeout = real_timeout;
+  }
 }
 
 
@@ -146,42 +279,46 @@ int create_gp_loop(gp_loop **loop)
 	memset(loop_t, 0, sizeof(*loop_t));
 	init_gp_loop(loop_t);
 	*loop = loop_t;
+	return 0;
 }
 
 int init_gp_loop(gp_loop *loop)
 {
 	gp_loop_update_time(loop);
 	loop->timer_base = NULL;
-	loop->timer_base = create_gp_timer_base(&loop->timer_base, loop->time);
+	create_gp_timer_base(&loop->timer_base, loop->time);
 	loop->watchers = NULL;
 	loop->nfds = 0;
 	loop->nwatchers = 0;
-	loop->stop_flag = 0;
+	loop->stop_flags = 0;
 	GP_LIST_INIT(&loop->watcher_list, gp_io, watcher_node);
 	GP_LIST_INIT(&loop->pending_list, gp_io, pending_node);
+	return 0;
 }
 
 int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 {
-	int ran_pending;
 	unsigned long timeout;
-	while(loop->stop_flag == 0){
+	while(loop->stop_flags == 0){
 		gp_loop_update_time(loop); 
+		printf("now time:%lu\n", loop->time);
 		gp_loop_run_timers(loop);
 		timeout = 0;
-		if((mode == GP_RUN_ONCE && !ran_pending) || mode == GP_RUN_DEFAULT)
-			timeout = loop->timer_base->next_timer - loop->timer_base;
+		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
+			timeout = loop->timer_base->next_timer - loop->time;
+		printf("timeout:%lu\n", timeout);
 
 		gp_io_poll(loop, timeout);
 		
 		if(mode == GP_RUN_ONCE) {
-			gp_update_time(loop);
+			gp_loop_update_time(loop);
 			gp_loop_run_timers(loop);
 		}
 		if(mode == GP_RUN_ONCE || mode == GP_RUN_NOWAIT)
 			break;
 	}
 
-	if(loop->stop_flag != 0)
-		loop->stop_flag = 0;
+	if(loop->stop_flags != 0)
+		loop->stop_flags = 0;
+	return 0;
 }
