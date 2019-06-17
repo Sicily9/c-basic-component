@@ -76,7 +76,6 @@ static unsigned long gp_next_timer(gp_timer_base *base)
 	index = slot = timer_jiffies & TVR_MASK;
 	do {
 		GP_LIST_FOREACH(base->tv1.vec+slot, timer){
-			printf("slot:%d, index:%d, expires:%lu\n", slot, index, timer->expires);
 			found = 1;
 			expires =timer->expires;
 
@@ -132,7 +131,6 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
     if (idx < TVR_SIZE) {
         i = expires & TVR_MASK;
         vec = base->tv1.vec + i; 
-		printf("tv1-index:%d\n", i);
     } else if (idx < 1 << (TVR_BITS + TVN_BITS)) {
         i = (expires >> TVR_BITS) & TVN_MASK;
         vec = base->tv2.vec + i; 
@@ -155,7 +153,6 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
 
     gp_list_append(vec, timer);
 	base->next_timer = gp_next_timer(base);
-	printf("fuck you2\n");
 }
 
 void gp_timer_add(gp_timer_base *base, gp_timer_list *timer)
@@ -247,7 +244,6 @@ static void cascade(tvec *tv, int index)
 	gp_timer_list *timer = NULL;
 	gp_timer_list *tmp =NULL;
 	GP_LIST_FOREACH_SAFE(tv->vec+index, tmp, timer){
-		printf("cascade: timer->expires:%lu\n", timer->expires);
 		gp_list_node_remove(&timer->node);
 		gp_timer_internal_add(timer->loop->timer_base, timer);
 	}
@@ -260,7 +256,6 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 	while( (long)(jiffies - base->timer_jiffies) >= 0){
 		int index = base->timer_jiffies & TVR_MASK;
 		if (index == 0) {
-			printf("jiffies:%lu, timer_jiffies:%lu, next_timer:%lu, diff:%ld, index:%d\n",jiffies, base->timer_jiffies, base->next_timer, jiffies - base->timer_jiffies, index);
 			int i = INDEX(base, 0);
 			cascade(&base->tv2, i);
 			if (i == 0) {
@@ -289,7 +284,6 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 				destruct_gp_timer(timer);
 			}
 			base->next_timer = gp_next_timer(base);
-			printf("next_timer: %lu\n", base->next_timer);
 		}
 
 	}

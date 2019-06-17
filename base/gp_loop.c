@@ -306,9 +306,6 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	unsigned long timeout;
 	while(loop->stop_flags == 0){
 		gp_loop_update_time(loop); 
-
-		printf("now time :%lu, base_timer_jiffies:%lu, next_timer:%lu, diff:%lu\n", loop->time, loop->timer_base->timer_jiffies, loop->timer_base->next_timer, loop->time - loop->timer_base->timer_jiffies);
-
 		gp_loop_run_timers(loop);
 		timeout = 0;
 
