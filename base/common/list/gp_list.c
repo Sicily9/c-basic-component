@@ -37,7 +37,6 @@ void * gp_list_last(const gp_list *list)
 void gp_list_append(gp_list *list, void *item)
 {
         gp_list_node *node = NODE(list, item);
-
         if ((node->ln_next != NULL) || (node->ln_prev != NULL)) {
                 printf("appending node already on a list or not inited\n");
         }
@@ -91,6 +90,10 @@ void gp_list_insert_after(gp_list *list, void *item, void *after)
 
 void * gp_list_next(const gp_list *list, void *item)
 {
+		if(item == NULL){
+			return NULL;
+		}
+
         gp_list_node *node = NODE(list, item);
 
         if ((node = node->ln_next) == &list->ll_head) {

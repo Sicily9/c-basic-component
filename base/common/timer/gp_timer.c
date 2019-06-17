@@ -152,9 +152,6 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
 
 	gp_timer_list *tmp;
     gp_list_append(vec, timer);
-	GP_LIST_FOREACH(&base->tv1.vec[i], tmp){
-		printf("timer expires:%lu\n", tmp->expires);
-	}
 	base->next_timer = gp_next_timer(base);
 	printf("fuck you2\n");
 	timer->base = base;
@@ -247,20 +244,20 @@ void destruct_gp_timer_base(gp_timer_base *base)
 
 static void cascade(tvec *tv, int index)
 {
-	gp_timer_list *timer =NULL;
-	GP_LIST_FOREACH(tv->vec+index, timer){
-		printf("timer->expires:%lu\n", timer->expires);
-		gp_list_remove(tv->vec+index, timer);
+	gp_timer_list *timer = NULL;
+	gp_timer_list *tmp =NULL;
+	GP_LIST_FOREACH_SAFE(tv->vec+index, tmp, timer){
+		printf("cascade: timer->expires:%lu\n", timer->expires);
+		gp_list_node_remove(&timer->node);
 		gp_timer_internal_add(timer->base, timer);
 	}
 }
 
 void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 {
-	gp_timer_list *timer =NULL;
+	gp_timer_list *timer = NULL;
+	gp_timer_list *tmp = NULL;
 	while( (long)(jiffies - base->timer_jiffies) >= 0){
-		gp_list tmp;
-		GP_LIST_INIT(&tmp, gp_timer_list, node);
 		int index = base->timer_jiffies & TVR_MASK;
 		if (index == 0) {
 			printf("jiffies:%lu, timer_jiffies:%lu, next_timer:%lu, diff:%ld, index:%d\n",jiffies, base->timer_jiffies, base->next_timer, jiffies - base->timer_jiffies, index);
@@ -280,9 +277,8 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 			}
 		}
 		base->timer_jiffies++;
-		gp_list_replace(base->tv1.vec + index, &tmp);
 		
-		GP_LIST_FOREACH(&tmp, timer){
+		GP_LIST_FOREACH_SAFE(base->tv1.vec + index, tmp, timer){
 			gp_timer_del(base, timer);
 			base->next_timer = gp_next_timer(base);
 			printf("next_timer: %lu\n", base->next_timer);

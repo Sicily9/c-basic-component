@@ -45,5 +45,8 @@ extern void   gp_list_node_remove(struct gp_list_node *);
 #define GP_LIST_FOREACH(l, it) \
         for (it = gp_list_first(l); it != NULL; it = gp_list_next(l, it))
 
+#define GP_LIST_FOREACH_SAFE(l, tmp, it) \
+        for (it = gp_list_first(l), tmp = gp_list_next(l, it); it != NULL; it = tmp, tmp = gp_list_next(l, it))
+
 #endif // GP_LIST_H
 

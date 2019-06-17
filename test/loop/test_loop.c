@@ -46,8 +46,8 @@ int main()
 	create_gp_loop(&loop);
 	
 	gp_io_start(loop, w, EPOLLIN);
-	gp_loop_timer_start(loop, timer_func1, loop, loop->time+1000);
-	gp_loop_timer_start(loop, timer_func2, loop, loop->time+2000);
+	gp_loop_timer_start(loop, timer_func1, loop, loop->time+500);
+	gp_loop_timer_start(loop, timer_func2, loop, loop->time+1000);
 	
 
 	gp_loop_run(loop, GP_RUN_DEFAULT);
