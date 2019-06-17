@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include "gp_list.h"
+#include "gp.h"
 #include <unistd.h>
 
 

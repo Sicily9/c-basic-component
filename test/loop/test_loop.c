@@ -1,23 +1,18 @@
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
-#include "gp_loop.h"
+#include "gp.h"
 
 void timer_func1(void *data)
 {
-	gp_loop *loop = data;
 	printf("i am 1\n");
-	gp_loop_timer_start(loop, timer_func1, loop, loop->time+1000);
 }
 
 void timer_func2(void *data)
 {
-	gp_loop *loop = data;
 	printf("i am 2\n");
-	gp_loop_timer_start(loop, timer_func2, loop, loop->time+2000);
 }
 
 void listen_cb(struct gp_loop_s *loop, struct gp_io_s *w, unsigned int events)
@@ -46,8 +41,8 @@ int main()
 	create_gp_loop(&loop);
 	
 	gp_io_start(loop, w, EPOLLIN);
-	gp_loop_timer_start(loop, timer_func1, loop, loop->time+500);
-	gp_loop_timer_start(loop, timer_func2, loop, loop->time+1000);
+	gp_loop_timer_start(loop, timer_func1, loop, 500, 1);
+	gp_loop_timer_start(loop, timer_func2, loop, 1000, 1);
 	
 
 	gp_loop_run(loop, GP_RUN_DEFAULT);

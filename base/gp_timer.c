@@ -1,9 +1,7 @@
-#include "stdlib.h"
-#include "time.h"
-#include "string.h"
-#include "gp_timer.h"
+#include <time.h>
+#include "gp.h"
 
-unsigned long gp_time(gp_clocktype_t type)
+unsigned long gp_time(gp_clocktype type)
 {
 	static clock_t fast_clock_id = -1;
 	struct timespec t;
@@ -30,33 +28,38 @@ unsigned long gp_time(gp_clocktype_t type)
 
 /*---------------------------------------gp_timer_list----------------------------------------*/
 
-void create_gp_timer(gp_timer_list **timer, void (*fn)(void *), void *data)
+void create_gp_timer(gp_timer_list **timer, void (*fn)(void *), void *data, unsigned long expires, int interval, int repeat)
 {
 	gp_timer_list *tmp = malloc(sizeof(gp_timer_list));
 	memset(tmp, 0, sizeof(*tmp));
-	init_gp_timer(tmp, fn, data);
+	init_gp_timer(tmp, fn, data, expires, interval, repeat);
 	*timer = tmp;
 }
 
-void init_gp_timer(gp_timer_list *timer, void (*fn)(void *), void *data)
+void init_gp_timer(gp_timer_list *timer, void (*fn)(void *), void *data, unsigned long expires, int interval, int repeat)
 {
 	GP_LIST_NODE_INIT(&timer->node);
-	timer->expires = 0;
+	timer->loop = NULL;
+	timer->expires = expires;
+	timer->interval = interval;
+	timer->repeat = repeat;
 	timer->state = 0;
 	timer->callback = fn;
 	timer->data = data;
-	timer->base = NULL;
 	
 }
 
 void destruct_gp_timer(gp_timer_list *timer)
 {
 	gp_list_node_remove(&timer->node);
-	timer->base = NULL;
+	timer->loop = NULL;
+	timer->expires = 0;
+	timer->interval = 0;
+	timer->repeat = 0;
 	timer->state = 0;
 	timer->callback = NULL;
 	timer->data = NULL;
-	timer->expires = 0;
+
 	free(timer);
 }
 
@@ -121,7 +124,7 @@ cascade:
 
 static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
 {
-	unsigned long expires = timer->expires;
+	unsigned long expires = timer->expires ;
     unsigned long idx = expires - base->timer_jiffies;
     gp_list *vec;
 
@@ -150,32 +153,29 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
         vec = base->tv5.vec + i;
     }
 
-	gp_timer_list *tmp;
     gp_list_append(vec, timer);
 	base->next_timer = gp_next_timer(base);
 	printf("fuck you2\n");
-	timer->base = base;
 }
 
-void gp_timer_add(gp_timer_base *base, gp_timer_list *timer, unsigned long expires)
+void gp_timer_add(gp_timer_base *base, gp_timer_list *timer)
 {
 	gp_list_node_remove(&timer->node);
-	timer->base = NULL;
-	timer->expires = expires;
-	
 	gp_timer_internal_add(base, timer);
 }
 
-void gp_timer_del(gp_timer_base *base, gp_timer_list *timer)
+void gp_timer_del(gp_timer_list *timer)
 {
 	gp_list_node_remove(&timer->node);
-	timer->base = NULL;
 }
 
-void gp_timer_mod(gp_timer_base *base, gp_timer_list *timer, unsigned long expires)
+void gp_timer_mod(gp_timer_base *base, gp_timer_list *timer, unsigned long expires, int interval, int repeat)
 {
-	gp_timer_del(base, timer);
-	gp_timer_add(base, timer, expires);
+	gp_timer_del(timer);
+	timer->expires = expires;
+	timer->interval = interval;
+	timer->repeat = repeat;
+	gp_timer_add(base, timer);
 }
 
 /*---------------------------------------gp_timer_base----------------------------------------*/
@@ -249,7 +249,7 @@ static void cascade(tvec *tv, int index)
 	GP_LIST_FOREACH_SAFE(tv->vec+index, tmp, timer){
 		printf("cascade: timer->expires:%lu\n", timer->expires);
 		gp_list_node_remove(&timer->node);
-		gp_timer_internal_add(timer->base, timer);
+		gp_timer_internal_add(timer->loop->timer_base, timer);
 	}
 }
 
@@ -279,11 +279,17 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 		base->timer_jiffies++;
 		
 		GP_LIST_FOREACH_SAFE(base->tv1.vec + index, tmp, timer){
-			gp_timer_del(base, timer);
-			base->next_timer = gp_next_timer(base);
-			printf("next_timer: %lu\n", base->next_timer);
 			if (timer->callback) 
 				timer->callback(timer->data);
+			gp_timer_del(timer);
+			if(timer->repeat == 1){
+				timer->expires = timer->loop->time + timer->interval;
+				gp_timer_add(base, timer);		
+			}else{
+				destruct_gp_timer(timer);
+			}
+			base->next_timer = gp_next_timer(base);
+			printf("next_timer: %lu\n", base->next_timer);
 		}
 
 	}

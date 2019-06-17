@@ -1,10 +1,9 @@
 #include <signal.h>
-#include "gp_thread.h"
-#include "stdlib.h"
+#include "gp.h"
 
 static void gp_tmr_wrap(void *arg)
 {
-	struct gp_thread_manager * gp_tmr = arg;
+	gp_thread_manager * gp_tmr = arg;
 	int start;
 
 	gp_mtx_lock(&gp_tmr->mtx);
@@ -28,7 +27,7 @@ static void * gp_thread_main(void *arg)
 {
 	pthread_detach(pthread_self());
 
-	struct gp_thread * gp_thr = arg;
+	gp_thread * gp_thr = arg;
 	sigset_t	set;
 
 	sigemptyset(&set);
@@ -36,16 +35,18 @@ static void * gp_thread_main(void *arg)
 	(void) pthread_sigmask(SIG_BLOCK, &set, NULL);
 
 	gp_thr->gp_thr_fn(gp_thr->arg);
+
+	return NULL;
 }
 
-void create_gp_thr_manager(struct gp_thread_manager **gp_tmr, gp_thread_fn fn, void *arg)
+void create_gp_thr_manager(gp_thread_manager **gp_tmr, gp_thread_fn fn, void *arg)
 {
-	struct gp_thread_manager * tmr = malloc(sizeof(struct gp_thread_manager));
+	gp_thread_manager * tmr = malloc(sizeof(gp_thread_manager));
 	init_gp_thr_manager(tmr, fn, arg);
 	*gp_tmr = tmr;
 }
 
-int init_gp_thr_manager(struct gp_thread_manager *gp_tmr, gp_thread_fn fn, void *arg)
+int init_gp_thr_manager(gp_thread_manager *gp_tmr, gp_thread_fn fn, void *arg)
 {
 	int rv;
 	gp_tmr->done = 0;
@@ -74,7 +75,7 @@ int init_gp_thr_manager(struct gp_thread_manager *gp_tmr, gp_thread_fn fn, void 
 
 }
 
-void destroy_gp_thr_manager(struct gp_thread_manager *gp_tmr)
+void destroy_gp_thr_manager(gp_thread_manager *gp_tmr)
 {
 	gp_tmr_finish(gp_tmr);
 	free(gp_tmr);
@@ -82,7 +83,7 @@ void destroy_gp_thr_manager(struct gp_thread_manager *gp_tmr)
 
 void gp_thr_manager_wait(void *gp_thr_manager)
 {
-	struct gp_thread_manager *gp_tmr = gp_thr_manager;
+	gp_thread_manager *gp_tmr = gp_thr_manager;
 
 	if(!gp_tmr->init){
 		return;
@@ -98,7 +99,7 @@ void gp_thr_manager_wait(void *gp_thr_manager)
 
 void gp_thr_manager_run(void *gp_thr_manager)
 {
-	struct gp_thread_manager *gp_tmr = gp_thr_manager;
+	gp_thread_manager *gp_tmr = gp_thr_manager;
 
 	gp_mtx_lock(&gp_tmr->mtx);
 	gp_tmr->start = 1;
@@ -108,7 +109,7 @@ void gp_thr_manager_run(void *gp_thr_manager)
 
 void gp_thr_manager_finish(void *gp_thr_manager)
 {
-	struct gp_thread_manager *gp_tmr = gp_thr_manager;
+	gp_thread_manager *gp_tmr = gp_thr_manager;
 
 	if(!gp_tmr->init){
 		return;
@@ -126,7 +127,7 @@ void gp_thr_manager_finish(void *gp_thr_manager)
 	gp_tmr->init = 0;
 }
 
-int init_gp_thr(struct gp_thread *gp_thr, gp_thread_fn fn, void *arg)
+int init_gp_thr(gp_thread *gp_thr, gp_thread_fn fn, void *arg)
 {
 	int rv;
 
@@ -140,23 +141,23 @@ int init_gp_thr(struct gp_thread *gp_thr, gp_thread_fn fn, void *arg)
 	return 0;
 }
 
-void init_gp_mtx(struct gp_mtx *mtx)
+void init_gp_mtx(gp_mtx *mtx)
 {
 	pthread_mutex_init(&mtx->mtx, NULL);
 }
 
-void destroy_gp_mtx(struct gp_mtx *mtx)
+void destroy_gp_mtx(gp_mtx *mtx)
 {
 	(void) pthread_mutex_destroy(&mtx->mtx);
 }
 	
-void init_gp_cv(struct gp_cv *cv, struct gp_mtx *mtx)
+void init_gp_cv(gp_cv *cv, gp_mtx *mtx)
 {
 	pthread_cond_init(&cv->cv, NULL);
 	cv->mtx = mtx;
 }
 
-void destroy_gp_cv(struct gp_cv *cv)
+void destroy_gp_cv(gp_cv *cv)
 {
 	pthread_cond_destroy(&cv->cv);
 	cv->mtx = NULL;

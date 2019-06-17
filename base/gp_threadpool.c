@@ -1,5 +1,4 @@
-#include <stdlib.h>
-#include "gp_threadpool.h"
+#include "gp.h"
 
 void gp_task_thread(void *arg)
 {
@@ -51,7 +50,7 @@ void create_task_processor(gp_task_processor **gp_tp, int num)
 
 void init_task_processor(gp_task_processor *gp_tp, int num)
 {
-	gp_tp->tp_threads = malloc(num*sizeof(struct gp_taskp_tmr));
+	gp_tp->tp_threads = malloc(num*sizeof(gp_taskp_tmr));
 	gp_tp->tp_nthreads= num;
 	GP_LIST_INIT(&gp_tp->tp_tasks, gp_task, task_node);
 

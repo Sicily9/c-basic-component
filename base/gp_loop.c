@@ -1,27 +1,25 @@
-#include "gp_loop.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "gp.h"
 #include <errno.h>
 #include <sys/epoll.h>
 /*-----------------------------timer------------------------------------*/ 
-void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, unsigned long expires)
+void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int interval, int repeat)
 {
 	gp_timer_list *timer = NULL;
-	create_gp_timer(&timer, fn, data);
-	gp_timer_add(loop->timer_base, timer, expires);
+	create_gp_timer(&timer, fn, data, loop->time + interval, interval, repeat);
+	timer->loop = loop;
+	gp_timer_add(loop->timer_base, timer);
 }
 
 
-void gp_loop_timer_stop(gp_loop *loop, gp_timer_list *timer)
+void gp_loop_timer_stop(gp_timer_list *timer)
 {
-	gp_timer_del(loop->timer_base, timer);
+	gp_timer_del(timer);
 
 }
 
-void gp_loop_timer_mod(gp_loop *loop, gp_timer_list *timer, unsigned long expires)
+void gp_loop_timer_mod(gp_loop *loop, gp_timer_list *timer, unsigned long expires, int interval, int repeat)
 {
-	gp_timer_mod(loop->timer_base, timer, expires);
+	gp_timer_mod(loop->timer_base, timer, expires, interval, repeat);
 }
 
 void gp_loop_run_timers(gp_loop *loop)
@@ -220,33 +218,33 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 	}
 	nevents = 0;
 	loop->watchers[loop->nwatchers] = (void*) events;
-    	loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
-    	for (i = 0; i < nfds; i++) {
-      		pe = events + i;
-      		fd = pe->data.fd;
+    loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
+    for (i = 0; i < nfds; i++) {
+      	pe = events + i;
+      	fd = pe->data.fd;
 
-      		if (fd == -1)
-        		continue;
+      	if (fd == -1)
+        	continue;
 
 
- 	        w = loop->watchers[fd];
+ 	    w = loop->watchers[fd];
 
-  	        if (w == NULL) {
-        		epoll_ctl(loop->backend_fd, EPOLL_CTL_DEL, fd, pe);
-        		continue;
-      		}
+  	    if (w == NULL) {
+        	epoll_ctl(loop->backend_fd, EPOLL_CTL_DEL, fd, pe);
+        	continue;
+      	}
 		
 		pe->events &= w->pevents | EPOLLERR | EPOLLHUP;
 		if (pe->events == EPOLLERR || pe->events == EPOLLHUP){
-        	      	pe->events |= w->pevents & 
+        	pe->events |= w->pevents & 
 				(EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI);
 		}
-    		if (pe->events != 0) {
-          		w->cb(loop, w, pe->events);
 
+    	if (pe->events != 0) {
+          	w->cb(loop, w, pe->events);
         	nevents++;
+		}
 
-	}
     	loop->watchers[loop->nwatchers] = NULL;
     	loop->watchers[loop->nwatchers + 1] = NULL;
 
@@ -308,11 +306,15 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	unsigned long timeout;
 	while(loop->stop_flags == 0){
 		gp_loop_update_time(loop); 
+
 		printf("now time :%lu, base_timer_jiffies:%lu, next_timer:%lu, diff:%lu\n", loop->time, loop->timer_base->timer_jiffies, loop->timer_base->next_timer, loop->time - loop->timer_base->timer_jiffies);
+
 		gp_loop_run_timers(loop);
 		timeout = 0;
+
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
 			timeout = loop->timer_base->next_timer - loop->time;
+
 		printf("timeout:%lu\n", timeout);
 
 		gp_io_poll(loop, timeout);

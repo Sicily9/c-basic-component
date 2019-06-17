@@ -1,4 +1,4 @@
-#include "gp_module.h"
+#include "gp.h"
 
 
 static gp_list first_list;

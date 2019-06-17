@@ -1,4 +1,4 @@
-#include "gp_module.h"
+#include "gp.h"
 
 void early_init_test(void){
 	printf("early_init_test\n");

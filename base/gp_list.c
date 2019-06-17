@@ -1,7 +1,4 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "gp_list.h"
+#include "gp.h"
 
 #define NODE(list, item) \
         (gp_list_node *) (void *)(((char *) item) + list->ll_offset)
