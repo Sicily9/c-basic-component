@@ -110,7 +110,7 @@ void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events)
 	maybe_resize(loop, w->fd + 1);
 
 	if(gp_list_node_active(&w->watcher_node))
-		gp_list_append(&loop->watcher_list, &w->watcher_node);
+		gp_list_append(&loop->watcher_list, w);
 	
 	if(loop->watchers[w->fd] == NULL) {
 		loop->watchers[w->fd] = w;
@@ -133,7 +133,7 @@ void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events)
 			w->events = 0;
 		}
 	}else if(gp_list_node_active(&w->watcher_node))
-		gp_list_append(&loop->watcher_list, &w->watcher_node);
+		gp_list_append(&loop->watcher_list, w);
 }
 
 void gp_io_poll(gp_loop *loop, unsigned long timeout)
@@ -189,7 +189,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 		nfds = epoll_wait(loop->backend_fd, 
 				   events, 
-				   sizeof(events)/sizeof(events[0]), 
+				   1024,
 				   timeout
 				   );
 
@@ -202,8 +202,11 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
     		}
 
     		if (nfds == -1) {
-      			if (errno != EINTR)
+      			if (errno != EINTR){
+					perror("epoll_wait");
+					printf("%d\n", errno);
         			abort();
+				}
 
       			if (timeout == -1)
         			continue;
@@ -291,6 +294,10 @@ int init_gp_loop(gp_loop *loop)
 	loop->nfds = 0;
 	loop->nwatchers = 0;
 	loop->stop_flags = 0;
+	loop->backend_fd = -1;
+
+	loop->backend_fd = epoll_create1(EPOLL_CLOEXEC);
+
 	GP_LIST_INIT(&loop->watcher_list, gp_io, watcher_node);
 	GP_LIST_INIT(&loop->pending_list, gp_io, pending_node);
 	return 0;
@@ -301,7 +308,7 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	unsigned long timeout;
 	while(loop->stop_flags == 0){
 		gp_loop_update_time(loop); 
-		printf("now time:%lu\n", loop->time);
+		printf("now time :%lu, base_timer_jiffies:%lu, next_timer:%lu, diff:%lu\n", loop->time, loop->timer_base->timer_jiffies, loop->timer_base->next_timer, loop->time - loop->timer_base->timer_jiffies);
 		gp_loop_run_timers(loop);
 		timeout = 0;
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
