@@ -1,7 +1,5 @@
-#include <stdlib.h>
 #include "proto.h"
-#include "gp_module.h"
-#include "gp_dict.h"
+#include "gp.h"
 
 static dict *dict1 = NULL;
 
