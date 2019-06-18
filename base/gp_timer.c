@@ -279,7 +279,7 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 			}
 			gp_timer_del(timer);
 			if(timer->repeat == 1){
-				timer->expires = timer->loop->time + timer->interval;
+				timer->expires += timer->interval;
 				gp_timer_add(base, timer);		
 			}else{
 				destruct_gp_timer(timer);
