@@ -29,7 +29,7 @@ void gp_loop_run_timers(gp_loop *loop)
 
 void gp_loop_update_time(gp_loop *loop)
 {
-	loop->time = gp_time(GP_CLOCK_FAST);
+	loop->time = gp_time(GP_CLOCK_PRECISE);
 }
 
 /*--------------------------------------gp_io---------------------------------------*/
@@ -305,15 +305,11 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 {
 	unsigned long timeout;
 	while(loop->stop_flags == 0){
-		gp_loop_update_time(loop); 
 		gp_loop_run_timers(loop);
 		timeout = 0;
 
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
 			timeout = loop->timer_base->next_timer - loop->time;
-
-		printf("timeout:%lu\n", timeout);
-
 		gp_io_poll(loop, timeout);
 		
 		if(mode == GP_RUN_ONCE) {

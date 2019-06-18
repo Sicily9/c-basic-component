@@ -274,8 +274,9 @@ void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
 		base->timer_jiffies++;
 		
 		GP_LIST_FOREACH_SAFE(base->tv1.vec + index, tmp, timer){
-			if (timer->callback) 
+			if (timer->callback){
 				timer->callback(timer->data);
+			}
 			gp_timer_del(timer);
 			if(timer->repeat == 1){
 				timer->expires = timer->loop->time + timer->interval;

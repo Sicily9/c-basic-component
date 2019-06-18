@@ -42,7 +42,7 @@ int main()
 	
 	gp_io_start(loop, w, EPOLLIN);
 	gp_loop_timer_start(loop, timer_func1, NULL, 500, 1);
-	gp_loop_timer_start(loop, timer_func2, NULL, 1000, 1);
+	gp_loop_timer_start(loop, timer_func2, NULL, 1000, 0);
 	
 
 	gp_loop_run(loop, GP_RUN_DEFAULT);

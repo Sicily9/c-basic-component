@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 
+typedef enum gp_run_mode_s gp_run_mode;
 typedef struct gp_loop_s gp_loop;
 typedef struct gp_io_s gp_io;
 typedef struct gp_list_s gp_list;
@@ -27,6 +28,7 @@ typedef struct dictType_s dictType;
 typedef struct dictht_s dictht;
 typedef struct dict_s dict;
 typedef struct dictIterator_s dictIterator;
+typedef enum gp_module_init_type_s gp_module_init_type;
 typedef struct gp_module_desc_s gp_module_desc;
 typedef enum gp_clocktype_s gp_clocktype;
 typedef struct gp_timer_base_s gp_timer_base;
@@ -39,11 +41,11 @@ typedef void (*gp_cb)(void *);
 typedef void (*gp_thread_fn)(void *);
 
 
-typedef enum {
+enum gp_run_mode_s{
     GP_RUN_DEFAULT = 0,
     GP_RUN_ONCE,
     GP_RUN_NOWAIT
-}gp_run_mode;
+};
 
 //doubly list
 struct gp_list_node_s {
@@ -67,9 +69,6 @@ struct gp_io_s {
 
 //TODO: add handle base class
 struct gp_loop_s {
-//  unsigned int active_handles;
-//  gp_list handle_list;
-//  unsigned int count;//active_request count
     unsigned int stop_flags;
     unsigned long flags;
     int backend_fd;
@@ -126,8 +125,6 @@ struct gp_task_s {
     gp_task_processor *task_tp;
     gp_thread_manager *task_tmr;
     unsigned         task_busy;
-    //int            task_prep;
-    //int            task_reap;
     gp_mtx        task_mtx;
     gp_cv             task_cv;
 };
@@ -200,7 +197,7 @@ struct dictIterator_s {
     long long fingerprint;
 };
 
-enum gp_module_init_type {
+enum gp_module_init_type_s {
     MODULE_INIT_FIRST,
 };
 
@@ -263,10 +260,7 @@ struct gp_timer_list_s {
 };
 
 
-
-
 /*-----------------------------------------------------------------------------------------------*/
-
 extern void create_gp_io(gp_io **, gp_io_cb, int);
 extern void init_gp_io(gp_io *, gp_io_cb, int);
 extern void gp_io_stop(gp_loop *, gp_io *, unsigned int);
@@ -274,7 +268,6 @@ extern void gp_io_start(gp_loop *, gp_io *, unsigned int);
 extern void gp_io_poll(gp_loop *, unsigned long);
 
 /*-----------------------------------------------------------------------------------------------*/
-
 extern int create_gp_loop(gp_loop **);
 extern int init_gp_loop(gp_loop *); 
 //extern int gp_loop_alive(gp_loop *loop);
@@ -289,16 +282,6 @@ extern void gp_loop_update_time(gp_loop *);
 
 
 /*-----------------------------------------------------------------------------------------------*/
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-
-#define GP_LIST_INIT(list, type, field) \
-        gp_list_init_offset(list, offsetof(type, field))
-
-#define GP_LIST_NODE_INIT(node)                       \
-        {                                              \
-                (node)->ln_prev = (node)->ln_next = 0; \
-        }
-
 extern void gp_list_init_offset(gp_list *list, size_t offset);
 extern void *gp_list_first(const gp_list *); 
 extern void *gp_list_last(const gp_list *); 
@@ -314,6 +297,16 @@ extern int   gp_list_active(gp_list *, void *);
 extern int   gp_list_empty(gp_list *); 
 extern int   gp_list_node_active(gp_list_node *); 
 extern void   gp_list_node_remove(gp_list_node *); 
+
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+
+#define GP_LIST_INIT(list, type, field) \
+        gp_list_init_offset(list, offsetof(type, field))
+
+#define GP_LIST_NODE_INIT(node)                       \
+        {                                              \
+                (node)->ln_prev = (node)->ln_next = 0; \
+        }
 
 #define GP_LIST_FOREACH(l, it) \
         for (it = gp_list_first(l); it != NULL; it = gp_list_next(l, it))
@@ -499,7 +492,6 @@ extern dictType dictTypeHeapStrings;
 extern dictType dictTypeHeapStringCopyKeyValue;
 /*-----------------------------------------------------------------------------------------------*/
 
-extern int siptlw(int c);
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
 
@@ -543,14 +535,11 @@ extern int siptlw(int c);
         v2 = ROTL(v2, 32);                                                     \
     } while (0)
 
-uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k);
-uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k);
+extern int siptlw(int c);
+extern uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k);
+extern uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k);
 
 /*-----------------------------------------------------------------------------------------------*/
-
-extern void gp_register_module(gp_module_desc *desc);
-
-
 #define gp_module_init(module) \
 static void __attribute__((constructor)) do_vs_init_ ## module(void) {  \
         if(module.early_init){ \
@@ -562,6 +551,7 @@ static void __attribute__((constructor)) do_vs_init_ ## module(void) {  \
 }
 
 extern int gp_init_modules(void);
+extern void gp_register_module(gp_module_desc *desc);
 
 
 /*-----------------------------------------------------------------------------------------------*/
