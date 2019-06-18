@@ -305,7 +305,7 @@ extern void   gp_list_node_remove(gp_list_node *);
 
 #define GP_LIST_NODE_INIT(node)                       \
         {                                              \
-                (node)->ln_prev = (node)->ln_next = 0; \
+                (node)->ln_prev = (node)->ln_next = NULL; \
         }
 
 #define GP_LIST_FOREACH(l, it) \

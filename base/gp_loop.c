@@ -10,7 +10,6 @@ void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int inte
 	gp_timer_add(loop->timer_base, timer);
 }
 
-
 void gp_loop_timer_stop(gp_timer_list *timer)
 {
 	gp_timer_del(timer);
@@ -107,10 +106,13 @@ void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events)
 	w->pevents |= events;
 	maybe_resize(loop, w->fd + 1);
 
-	if(gp_list_node_active(&w->watcher_node))
+	if(!gp_list_node_active(&w->watcher_node)){
 		gp_list_append(&loop->watcher_list, w);
-	
+		printf("append loop list fd:%d\n", w->fd);
+	}
+
 	if(loop->watchers[w->fd] == NULL) {
+		printf("fd:%d\n", w->fd);
 		loop->watchers[w->fd] = w;
 		loop->nfds++;
 	}
@@ -141,7 +143,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
   	struct epoll_event* pe;
   	struct epoll_event e;
   	int real_timeout;
-  	gp_io* w;
+  	gp_io* w, *tmp;
   	uint64_t base;
   	int nevents;
   	int count;
@@ -158,7 +160,8 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 	//take out the epoll event from the loop watcher list and insert into
 	//the rb-tree
-	GP_LIST_FOREACH(&loop->watcher_list, w){
+	GP_LIST_FOREACH_SAFE(&loop->watcher_list, tmp,w){
+		printf("tfd: %d\n", w->fd);
     	e.events = w->pevents;
     	e.data.fd = w->fd;
 		if (w->events == 0)
@@ -197,25 +200,25 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
       			if (timeout == 0)
         			return;
       			goto update_timeout;
-    		}
+    	}
 
-    		if (nfds == -1) {
-      			if (errno != EINTR){
-					perror("epoll_wait");
-					printf("%d\n", errno);
-        			abort();
-				}
+    	if (nfds == -1) {
+      		if (errno != EINTR){
+				perror("epoll_wait");
+				printf("%d\n", errno);
+        		abort();
+			}
 
-      			if (timeout == -1)
-        			continue;
+      		if (timeout == -1)
+        		continue;
 
-      			if (timeout == 0)
-        			return;
+      		if (timeout == 0)
+        		return;
 
-      			goto update_timeout;
-    		}
+      		goto update_timeout;
+    	}
 
-	}
+	
 	nevents = 0;
 	loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
@@ -228,7 +231,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 
  	    w = loop->watchers[fd];
-
+		printf("fd:%d,wakeup:%d\n",fd,  w->fd);
   	    if (w == NULL) {
         	epoll_ctl(loop->backend_fd, EPOLL_CTL_DEL, fd, pe);
         	continue;
@@ -244,31 +247,34 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
           	w->cb(loop, w, pe->events);
         	nevents++;
 		}
+	}
 
-    	loop->watchers[loop->nwatchers] = NULL;
-    	loop->watchers[loop->nwatchers + 1] = NULL;
+    loop->watchers[loop->nwatchers] = NULL;
+    loop->watchers[loop->nwatchers + 1] = NULL;
 
+	printf("hahaha timeout:%lu\n", timeout);
 
-    	if (nevents != 0) {
-      		if (nfds == sizeof(events)/sizeof(events[0]) && --count != 0) {
-        		timeout = 0;
-        		continue;
-      		}
-      		return;
-    	}
+    if (nevents != 0) {
+      	if (nfds == 1024 && --count != 0) {
+        	timeout = 0;
+        	continue;
+      	}
+      	return;
+    }
+	printf("hahaha timeout:%lu\n", timeout);
 
-    	if (timeout == 0)
-      		return;
+    if (timeout == 0)
+      	return;
 
-    	if (timeout == -1)
-      		continue;
+    if (timeout == -1)
+      	continue;
 
 update_timeout:
-    	real_timeout -= (loop->time - base);
-    	if (real_timeout <= 0)
-      		return;
+    real_timeout -= (loop->time - base);
+    if (real_timeout <= 0)
+      	return;
 
-    	timeout = real_timeout;
+    timeout = real_timeout;
   }
 }
 
@@ -292,8 +298,6 @@ int init_gp_loop(gp_loop *loop)
 	loop->nfds = 0;
 	loop->nwatchers = 0;
 	loop->stop_flags = 0;
-	loop->backend_fd = -1;
-
 	loop->backend_fd = epoll_create1(EPOLL_CLOEXEC);
 
 	GP_LIST_INIT(&loop->watcher_list, gp_io, watcher_node);
@@ -310,6 +314,7 @@ int gp_loop_run(gp_loop *loop, gp_run_mode mode)
 
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
 			timeout = loop->timer_base->next_timer - loop->time;
+		
 		gp_io_poll(loop, timeout);
 		
 		if(mode == GP_RUN_ONCE) {
