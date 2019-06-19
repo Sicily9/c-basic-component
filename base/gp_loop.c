@@ -108,11 +108,9 @@ void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events)
 
 	if(!gp_list_node_active(&w->watcher_node)){
 		gp_list_append(&loop->watcher_list, w);
-		printf("append loop list fd:%d\n", w->fd);
 	}
 
 	if(loop->watchers[w->fd] == NULL) {
-		printf("fd:%d\n", w->fd);
 		loop->watchers[w->fd] = w;
 		loop->nfds++;
 	}
@@ -160,8 +158,8 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 	//take out the epoll event from the loop watcher list and insert into
 	//the rb-tree
-	GP_LIST_FOREACH_SAFE(&loop->watcher_list, tmp,w){
-		printf("tfd: %d\n", w->fd);
+	GP_LIST_FOREACH_SAFE(&loop->watcher_list, tmp, w){
+		gp_list_node_remove(&w->watcher_node);
     	e.events = w->pevents;
     	e.data.fd = w->fd;
 		if (w->events == 0)
@@ -190,7 +188,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 		nfds = epoll_wait(loop->backend_fd, 
 				   events, 
-				   1024,
+				   sizeof(events)/sizeof(events[0]),
 				   timeout
 				   );
 
@@ -231,7 +229,6 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
 
 
  	    w = loop->watchers[fd];
-		printf("fd:%d,wakeup:%d\n",fd,  w->fd);
   	    if (w == NULL) {
         	epoll_ctl(loop->backend_fd, EPOLL_CTL_DEL, fd, pe);
         	continue;
@@ -252,7 +249,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
     loop->watchers[loop->nwatchers] = NULL;
     loop->watchers[loop->nwatchers + 1] = NULL;
 
-	printf("hahaha timeout:%lu\n", timeout);
+	printf("hahaha timeout:%lu, nfds:%d\n", timeout, nfds);
 
     if (nevents != 0) {
       	if (nfds == 1024 && --count != 0) {
@@ -261,7 +258,6 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
       	}
       	return;
     }
-	printf("hahaha timeout:%lu\n", timeout);
 
     if (timeout == 0)
       	return;
