@@ -1,8 +1,8 @@
 #include "gp.h"
 
 #define NODE(list, item) \
-        (gp_list_node *) (void *)(((char *) item) + list->ll_offset)
-#define ITEM(list, node) (void *) (((char *) node) - list->ll_offset)
+        (gp_list_node *) (void *)(((char *) item) + (list)->ll_offset)
+#define ITEM(list, node) (void *) (((char *) node) - (list)->ll_offset)
 
 void gp_list_init_offset(gp_list *list, size_t offset)
 {
@@ -87,14 +87,18 @@ void gp_list_insert_after(gp_list *list, void *item, void *after)
 
 void * gp_list_next(const gp_list *list, void *item)
 {
-		if(item == NULL){
+    	if(item == NULL ){
 			return NULL;
 		}
 
         gp_list_node *node = NODE(list, item);
 
+        if(node->ln_next == NULL ){ // item->ln_next == NULL 测试: TestNext
+            return NULL;
+        }
+
         if ((node = node->ln_next) == &list->ll_head) {
-                return (NULL);
+            return NULL;
         }
         return (ITEM(list, node));
 }
@@ -121,7 +125,6 @@ void gp_list_remove(gp_list *list, void *item)
 
 void gp_list_replace(gp_list *old, gp_list *new)
 {
-
         new->ll_head.ln_next = old->ll_head.ln_next;
         new->ll_head.ln_next->ln_prev = &new->ll_head;
         new->ll_head.ln_prev = old->ll_head.ln_prev;
