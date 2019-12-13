@@ -9,8 +9,14 @@
 #include <ctype.h>
 #include <pthread.h>
 
+#ifndef likely
+	#define likely(x)     __builtin_expect((x), 1)
+#endif
 
-typedef enum gp_run_mode_s gp_run_mode;
+#ifndef unlikely
+	#define unlikely(x)   __builtin_expect((x), 0)
+#endif
+
 typedef struct gp_loop_s gp_loop;
 typedef struct gp_io_s gp_io;
 typedef struct gp_list_s gp_list;
@@ -28,17 +34,17 @@ typedef struct dictType_s dictType;
 typedef struct dictht_s dictht;
 typedef struct dict_s dict;
 typedef struct dictIterator_s dictIterator;
-typedef enum gp_module_init_type_s gp_module_init_type;
 typedef struct gp_module_desc_s gp_module_desc;
-typedef enum gp_clocktype_s gp_clocktype;
 typedef struct gp_timer_base_s gp_timer_base;
 typedef struct gp_timer_list_s gp_timer_list;
 typedef struct tvec_root_s tvec_root;
 typedef struct tvec_s	tvec;
+typedef struct gp_ring_s gp_ring;
 
 typedef void (*gp_io_cb)(gp_loop *loop, gp_io *w, unsigned int events);
 typedef void (*gp_cb)(void *);
 typedef void (*gp_thread_fn)(void *);
+
 
 
 enum gp_run_mode_s{
@@ -46,6 +52,9 @@ enum gp_run_mode_s{
     GP_RUN_ONCE,
     GP_RUN_NOWAIT
 };
+typedef enum gp_run_mode_s gp_run_mode;
+
+
 
 //doubly list
 struct gp_list_node_s {
@@ -119,10 +128,10 @@ struct gp_thread_manager_ops_s{
 };
 
 struct gp_task_s {
-    gp_list_node      task_node;
-    void *               task_arg;
-    gp_cb                task_cb;
-    gp_task_processor *task_tp;
+    gp_list_node      task_node;   
+    void *               task_arg; //task对应的 消息
+    gp_cb                task_cb;  //task对应的 处理函数
+    gp_task_processor *task_tp;    //task 管理结构
     gp_thread_manager *task_tmr;
     unsigned         task_busy;
     gp_mtx        task_mtx;
@@ -200,6 +209,7 @@ struct dictIterator_s {
 enum gp_module_init_type_s {
     MODULE_INIT_FIRST,
 };
+typedef enum gp_module_init_type_s gp_module_init_type;
 
 struct gp_module_desc_s {
     gp_list_node node;
@@ -229,6 +239,7 @@ enum gp_clocktype_s{
     GP_CLOCK_PRECISE = 0,
     GP_CLOCK_FAST = 1
 };
+typedef enum gp_clocktype_s gp_clocktype;
 
 struct tvec_s {
     gp_list vec[TVN_SIZE];
@@ -259,7 +270,38 @@ struct gp_timer_list_s {
     unsigned int state;
 };
 
+#define CACHE_LINE_SIZE 64
+#define RBUFSIZE 1024
+#define RBUFMASK RBUFSIZE-1
 
+struct gp_ring_headtail_s {
+	volatile uint32_t first;
+	volatile uint32_t second;
+};
+
+struct gp_ring_s {
+	char name[32] __attribute((aligned(CACHE_LINE_SIZE)));
+
+	uint32_t size;// size of ring
+	uint32_t mask;// mask (size - 1) of ring
+	uint32_t capacity;// usable size of ring
+
+    char pad0 __attribute((aligned(CACHE_LINE_SIZE)));// usable size of ring
+
+	struct {
+		volatile uint32_t first;//这里使用 first 和second的原因是因为 可以保证多生产和多消费同时进行,并且可以保证一个顺序
+		volatile uint32_t second; //使用volatile是因为编译器的cas接口要求入参是volatile
+	}head __attribute((aligned(CACHE_LINE_SIZE)));//cacheline 对齐
+    char pad1 __attribute((aligned(CACHE_LINE_SIZE)));//
+
+    struct {
+		volatile uint32_t first;
+		volatile uint32_t second;
+	}tail __attribute((aligned(CACHE_LINE_SIZE)));
+    char pad2 __attribute((aligned(CACHE_LINE_SIZE)));// 
+
+    void *msgs[0];	
+};
 /*-----------------------------------------------------------------------------------------------*/
 extern void create_gp_io(gp_io **, gp_io_cb, int);
 extern void init_gp_io(gp_io *, gp_io_cb, int);
@@ -382,7 +424,7 @@ extern void init_gp_cv(gp_cv *cv, gp_mtx *mtx);
 extern void destroy_gp_cv(gp_cv *cv);
 extern gp_thread_mgr_operations gp_tmr_ops;
 
-/*-----------------------------------------------------------------------------------------------*/
+/*----------------------------------------------gp_task-----------------------------------------------*/
 
 
 extern void create_task_processor(gp_task_processor **gp_tp, int num);
@@ -394,7 +436,7 @@ extern void run_task(gp_task *task);
 extern void wait_task(gp_task *task);
 extern void destroy_task(gp_task *task);
 
-/*-----------------------------------------------------------------------------------------------*/
+/*----------------------------------------------gp_dict-----------------------------------------------*/
 #define DICT_OK 0
 #define DICT_ERR 1
 #define DICT_NOTUSED(V) ((void) V)
@@ -490,7 +532,7 @@ extern dictEntry **dictFindEntryRefByPtrAndHash(dict *d, const void *oldptr, uin
 extern dictType dictTypeHeapStringCopyKey;
 extern dictType dictTypeHeapStrings;
 extern dictType dictTypeHeapStringCopyKeyValue;
-/*-----------------------------------------------------------------------------------------------*/
+/*-------------------------------------------gp_hash---------------------------------------------------*/
 
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
@@ -539,7 +581,7 @@ extern int siptlw(int c);
 extern uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k);
 extern uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k);
 
-/*-----------------------------------------------------------------------------------------------*/
+/*---------------------------------------------gp_module------------------------------------------------*/
 #define gp_module_init(module) \
 static void __attribute__((constructor)) do_vs_init_ ## module(void) {  \
         if(module.early_init){ \
@@ -554,7 +596,7 @@ extern int gp_init_modules(void);
 extern void gp_register_module(gp_module_desc *desc);
 
 
-/*-----------------------------------------------------------------------------------------------*/
+/*---------------------------------------------gp_timer-------------------------------------------------*/
 
 extern void create_gp_timer(gp_timer_list **, void (*fn)(void *), void *, unsigned long, int, int);
 extern void init_gp_timer(gp_timer_list *, void (*fn)(void *), void *, unsigned long, int, int);
@@ -569,6 +611,11 @@ extern void destruct_gp_timer_base(gp_timer_base *);
 extern unsigned long gp_time(gp_clocktype);
 
 
+/*----------------------------------------------gp_ring---------------------------------------------*/
+extern void create_gp_ring(gp_ring **, int);
+extern void init_gp_ring(gp_ring *, int);
+extern int gp_ring_push(gp_ring *, int, void **);
+extern int gp_ring_pop(gp_ring *, int, void **);
 
 
 #endif

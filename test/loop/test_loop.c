@@ -73,12 +73,12 @@ int main()
 	create_gp_io(&w, listen_cb, sock);
 	gp_io_start(loop, w, EPOLLIN|EPOLLET);
 
-	//gp_loop_timer_start(loop, timer_func1, NULL, 500, 1);
-	//gp_loop_timer_start(loop, timer_func2, NULL, 1000, 1);
-	//gp_loop_timer_start(loop, timer_func3, NULL, 1500, 1);
-	//gp_loop_timer_start(loop, timer_func4, NULL, 2000, 1);
-	//gp_loop_timer_start(loop, timer_func5, NULL, 2500, 1);
-	//gp_loop_timer_start(loop, timer_func6, NULL, 3000, 1);
+	gp_loop_timer_start(loop, timer_func1, NULL, 500, 1);
+	gp_loop_timer_start(loop, timer_func2, NULL, 1000, 1);
+	gp_loop_timer_start(loop, timer_func3, NULL, 1500, 1);
+	gp_loop_timer_start(loop, timer_func4, NULL, 2000, 1);
+	gp_loop_timer_start(loop, timer_func5, NULL, 2500, 1);
+	gp_loop_timer_start(loop, timer_func6, NULL, 3000, 1);
 	
 
 	gp_loop_run(loop, GP_RUN_DEFAULT);

@@ -1,0 +1,21 @@
+if(test)
+	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/test/bin)
+	set(list_src "list/test_list.cpp")
+	set(dict_src "dict/test_dict.c" "dict/sds.h" "dict/sds.c")
+	set(loop_src "loop/test_loop.c") 
+	set(module_src "module/test_module.c") 
+	set(thread_src "thread/test_thread.c") 
+	set(threadpool_src "threadpool/test_threadpool.c" "threadpool/task.pb-c.h"
+			"threadpool/task.pb-c.c" "threadpool/proto.h" "threadpool/proto.c") 
+	set(lib_dep "base" "gtest" "gmock") 
+	set(lib2_dep "base" "gtest" "gmock" "protobuf-c")
+
+	#build_test_target in top dir cmakelists.txt
+	build_target(T "gp_list" SRC ${list_src} LIBS ${lib_dep})
+	gtest_discover_tests(gp_list)
+	build_target(T "gp_dict" SRC ${dict_src} LIBS ${lib_dep})
+	build_target(T "gp_loop" SRC ${loop_src} LIBS ${lib_dep})
+	build_target(T "gp_module" SRC ${module_src} LIBS ${lib_dep})
+	build_target(T "gp_thread" SRC ${thread_src} LIBS ${lib_dep})
+	build_target(T "gp_threadpool" SRC ${threadpool_src} LIBS ${lib2_dep})
+endif()

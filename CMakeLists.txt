@@ -1,24 +1,29 @@
-cmake_minimum_required (VERSION 3.1)
+cmake_minimum_required (VERSION 3.15)
 
-project (gp C)
+project (gp_C)
 
-# add compile information display
-set(CMAKE_VERBOSE_MAKEFILE ON)
+include(GoogleTest)
+include_directories(${PROJECT_SOURCE_DIR}/include
+		${PROJECT_SOURCE_DIR}/googletest/googletest/include)
+link_directories(${PROJECT_SOURCE_DIR}/lib ${PROJECT_SOURCE_DIR}/googletest)
 
-# set executable file path
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+option(test "enable test" ON)
+set(CMAKE_VERBOSE_MAKEFILE ON) # add compile information display
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)# set executable file path
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+function(build_target)
+	CMAKE_PARSE_ARGUMENTS(
+		ARG "" "T" "SRC;LIBS" ${ARGN}
+	)
+	add_executable(${ARG_T} ${ARG_SRC})
+	target_link_libraries(${ARG_T} ${ARG_LIBS})
+endfunction(build_target)
 
-add_definitions("-Wall -g")
-add_subdirectory(test/thread)
-add_subdirectory(test/list)
-add_subdirectory(test/threadpool)
-add_subdirectory(test/dict)
-add_subdirectory(test/module)
-add_subdirectory(test/loop)
+add_definitions("-Wall -g -fdiagnostics-color=auto")
+enable_testing() #这个要在项目根目录里开启
 
 
+add_subdirectory(test)
+add_subdirectory(googletest)
 add_subdirectory(base)
-
 

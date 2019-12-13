@@ -15,6 +15,26 @@ uint64_t hashCallback(const void *key) {
     return dictGenHashFunction((unsigned char*)key, sdslen((char*)key));
 }
 
+uint64_t hashCallback_u64(const void *key) {
+    return dictGenHashFunction((unsigned char*)key, sizeof(unsigned long));
+}
+
+int compareCallback_u64(void *privdata, const void *key1, const void *key2) {
+    unsigned long l1,l2;
+    DICT_NOTUSED(privdata);
+
+    l1 = (unsigned long)key1;
+    l2 = (unsigned long)key2;
+    if (l1 != l2) return 0;
+    return memcmp(key1, key2, l1) == 0;
+}
+
+void freeCallback_ptr(void *privdata, void *val) {
+    DICT_NOTUSED(privdata);
+	val = NULL;
+
+}
+
 int compareCallback(void *privdata, const void *key1, const void *key2) {
     int l1,l2;
     DICT_NOTUSED(privdata);
@@ -30,6 +50,15 @@ void freeCallback(void *privdata, void *val) {
 
     sdsfree(val);
 }
+
+dictType PtrDictType = {
+    hashCallback_u64,
+    NULL,
+    NULL,
+    compareCallback_u64,
+    freeCallback_ptr,
+    NULL 
+};
 
 dictType BenchmarkDictType = {
     hashCallback,
@@ -48,6 +77,15 @@ dictType BenchmarkDictType = {
 } while(0);
 
 dict * dict2 = NULL;
+dict * test_dict = NULL;
+
+
+struct A{
+	int a;
+	int b;
+};
+
+struct A a[5] = {0};
 void __attribute((constructor))__func(void){
 	char a[10];
 	strcpy(a, "123456");
@@ -57,11 +95,24 @@ void __attribute((constructor))__func(void){
 	dict2 =dictCreate(STRING_DICT, 0);
 	int ret = dictAdd(dict2, a, &b);
 	assert(ret == DICT_OK);
+
 }
 
 void func1(void){
     int a = *(int *)dictFetchValue(dict2, "123456");
     printf("a:%d\n", a);
+}
+
+void print_keys(dict *dict)
+{
+    dictIterator * di;
+	dictEntry * de;
+
+    di = dictGetSafeIterator(dict);
+
+	while( (de = dictNext(di)) != NULL){
+    	printf("%p\n", dictGetKey(de));
+	}
 }
 
 /* dict-benchmark [count] */
@@ -72,6 +123,21 @@ int main(int argc, char **argv) {
     long long start, elapsed;
     dict *dict = _dictCreate(&BenchmarkDictType,NULL);
     long count = 0; 
+
+	test_dict =_dictCreate(&PtrDictType, NULL);
+	for(int i = 0; i < 4; i++){
+    	dictAdd(test_dict, (void *)&a[i], (void *)&i);
+		printf("size:%ld %p\n",test_dict->ht[0].used, &a[i]);
+	}
+	
+	print_keys(test_dict);
+    
+
+	for(int i = 0; i < 4; i++){
+    	dictDelete(test_dict, (void *)&a[i]);
+		printf("size:%ld\n",test_dict->ht[0].used);
+	}
+	print_keys(test_dict);
 
     if (argc == 2) { 
         count = strtol(argv[1],NULL,10);
