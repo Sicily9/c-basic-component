@@ -10,16 +10,16 @@ void early_init_proto(void)
 	dictAdd(dict1, "Name", (void *)&name__descriptor);
 }
 
-size_t encode(ProtobufCMessage * msg, uint8_t **out)
+size_t encode(ProtobufCMessage * msg, unsigned char **out)
 {
 	int t = protobuf_c_message_get_packed_size(msg);
-	uint8_t *tmp = malloc(t);
+	unsigned char *tmp = malloc(t);
 	*out = tmp;
 	int size = protobuf_c_message_pack(msg, *out);
 	return size;
 }
 
-ProtobufCMessage * decode(char * name, size_t len, uint8_t *data)
+ProtobufCMessage * decode(char * name, size_t len, unsigned char *data)
 {
 	ProtobufCMessageDescriptor* desc = dictFetchValue(dict1, name);
 	ProtobufCMessage *msg =protobuf_c_message_unpack(desc, NULL, len, data);

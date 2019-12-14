@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -338,9 +339,9 @@ extern void  gp_list_remove(gp_list *, void *);
 extern int   gp_list_active(gp_list *, void *); 
 extern int   gp_list_empty(gp_list *); 
 extern int   gp_list_node_active(gp_list_node *); 
-extern void   gp_list_node_remove(gp_list_node *); 
+extern void   gp_list_node_remove(gp_list_node *);
 
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+//#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
 #define GP_LIST_INIT(list, type, field) \
         gp_list_init_offset(list, offsetof(type, field))

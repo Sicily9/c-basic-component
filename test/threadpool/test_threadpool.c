@@ -22,7 +22,7 @@ int main()
 	a.name = malloc(10);
 	strcpy(a.name, "i am a");
 	
-	char *c =NULL;
+	unsigned char *c =NULL;
 	int size = encode((ProtobufCMessage *)&a, &c);
 	
 	ProtobufCMessage * p = decode("Name", size, c);
