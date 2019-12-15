@@ -397,7 +397,7 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
      * more frequently. */
     ht = dictIsRehashing(d) ? &d->ht[1] : &d->ht[0];
     entry = malloc(sizeof(*entry));
-    entry->next = ht->table[index];
+    entry->next = ht->table[index]; //这的插入是链表头插
     ht->table[index] = entry;
     ht->used++;
 
@@ -418,10 +418,12 @@ int dictReplace(dict *d, void *key, void *val)
     /* Try to add the element. If the key
      * does not exists dictAdd will succeed. */
     entry = dictAddRaw(d,key,&existing);
-    if (entry) {
+    if (entry) {//没找到旧的entry 返回新的entry dictAddRaw里 set key 在这里set val
         dictSetVal(d, entry, val);
         return 1;
     }
+
+    //下面的代码是 找到旧的, 就无需set key 直接set new value 并 free old value
 
     /* Set the new value and free the old one. Note that it is important
      * to do that in this order, as the value may just be exactly the same

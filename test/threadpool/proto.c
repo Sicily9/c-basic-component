@@ -27,10 +27,6 @@ ProtobufCMessage * decode(char * name, size_t len, unsigned char *data)
 	return msg;
 }
 
-gp_module_desc proto_module ={
-    .name = "proto",
-    .type = MODULE_INIT_FIRST,
-    .early_init = early_init_proto,
-};
+gp_module_desc proto_module; 
 
-gp_module_init(proto_module);
+gp_module_init(proto_module, MODULE_INIT_FIRST, "proto", NULL, early_init_proto);

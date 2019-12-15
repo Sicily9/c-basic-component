@@ -217,7 +217,7 @@ struct gp_module_desc_s {
     int type;
 
     int priority;
-    char *name;
+    char name[20];
     void (*init)(void);
     void (*early_init)(void);
     //void (*destroy)(void);
@@ -354,6 +354,8 @@ extern void   gp_list_node_remove(gp_list_node *);
 #define GP_LIST_FOREACH(l, it) \
         for (it = gp_list_first(l); it != NULL; it = gp_list_next(l, it))
 
+//gp_list_foreach_safe 是因为 如果要遍历删除的话, 删除后的节点p  p->next ==
+//NULL了 因此不会执行下一次循环了,  所以得先有一个指针指着下一个 然后删除上一个
 #define GP_LIST_FOREACH_SAFE(l, tmp, it) \
         for (it = gp_list_first(l), tmp = gp_list_next(l, it); it != NULL; it = tmp, tmp = gp_list_next(l, it))
 
@@ -583,8 +585,13 @@ extern uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k)
 extern uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k);
 
 /*---------------------------------------------gp_module------------------------------------------------*/
-#define gp_module_init(module) \
-static void __attribute__((constructor)) do_vs_init_ ## module(void) {  \
+#define gp_module_init(module, arg1, arg2, func1, func2) \
+static void __attribute__((constructor)) do_gp_init_ ## module(void) {  \
+        module.type = arg1; \
+        strcpy(module.name, arg2); \
+        module.init = func1; \
+        module.early_init = func2; \
+        \
         if(module.early_init){ \
         module.early_init(); \
     } \
