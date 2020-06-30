@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <sys/queue.h>
 
 #ifndef likely
 	#define likely(x)     __builtin_expect((x), 1)
@@ -41,6 +42,7 @@ typedef struct gp_timer_list_s gp_timer_list;
 typedef struct tvec_root_s tvec_root;
 typedef struct tvec_s	tvec;
 typedef struct gp_ring_s gp_ring;
+typedef struct gp_task_wait_strategy_s gp_task_wait_strategy;
 
 typedef void (*gp_io_cb)(gp_loop *loop, gp_io *w, unsigned int events);
 typedef void (*gp_cb)(void *);
@@ -144,14 +146,23 @@ struct gp_taskp_tmr_s {
     gp_thread_manager tpt_thread;
 };
 
+
+typedef int (*wait_for)(const void *, const void *);
+
+struct gp_task_wait_strategy_s {
+	wait_for	func;
+};
+
 //TODO: priority queue
 // a threadpool
 struct gp_task_processor_s {
     gp_list       tp_tasks;
+    gp_ring      *tp_tasks_ring;
     gp_mtx        tp_mtx;
     gp_cv         tp_sched_cv;
     gp_cv         tp_wait_cv;
     gp_taskp_tmr *tp_threads;
+	gp_task_wait_strategy *wait_strategy;
     int          tp_nthreads;
     int          tp_run;
 };
@@ -303,6 +314,25 @@ struct gp_ring_s {
 
     void *msgs[0];	
 };
+
+
+typedef struct gp_conf_node_ {
+    char *name;
+    char *val;
+
+    int is_seq;
+
+    /**< Flag that sets this nodes value as final. */
+    int final;
+
+    struct gp_conf_node_ *parent;
+    TAILQ_HEAD(, gp_conf_node_) head;
+    TAILQ_ENTRY(gp_conf_node_) next;
+} gp_conf_node;
+
+
+
+
 /*-----------------------------------------------------------------------------------------------*/
 extern void create_gp_io(gp_io **, gp_io_cb, int);
 extern void init_gp_io(gp_io *, gp_io_cb, int);
@@ -624,6 +654,55 @@ extern void create_gp_ring(gp_ring **, int);
 extern void init_gp_ring(gp_ring *, int);
 extern int gp_ring_push(gp_ring *, int, void **);
 extern int gp_ring_pop(gp_ring *, int, void **);
+
+
+/*-----------------------------------------------gp_conf--------------------------------------------*/
+void gp_conf_init(void);
+void gp_conf_deinit(void);
+gp_conf_node *gp_conf_get_root_node(void);
+int gp_conf_get(const char *name, const char **vptr);
+int gp_conf_get_value(const char *name, const char **vptr);
+int gp_conf_get_Int(const char *name, intmax_t *val);
+int gp_conf_get_bool(const char *name, int *val);
+int gp_conf_get_double(const char *name, double *val);
+int gp_conf_get_float(const char *name, float *val);
+int gp_conf_set(const char *name, const char *val);
+int gp_conf_set_from_string(const char *input, int final);
+int gp_conf_set_final(const char *name, const char *val);
+void gp_conf_dump(void);
+void gp_conf_node_dump(const gp_conf_node *node, const char *prefix);
+gp_conf_node *gp_conf_node_new(void);
+void gp_conf_node_free(gp_conf_node *);
+gp_conf_node *gp_conf_get_node(const char *key);
+void gp_conf_create_context_backup(void);
+void gp_conf_restore_context_backup(void);
+gp_conf_node *gp_conf_node_lookup_child(const gp_conf_node *node, const char *key);
+const char *gp_conf_node_lookup_child_value(const gp_conf_node *node, const char *key);
+void gp_conf_node_remove(gp_conf_node *);
+void gp_conf_register_tests(void);
+int gp_conf_node_child_value_is_true(const gp_conf_node *node, const char *key);
+int gp_conf_val_is_true(const char *val);
+int gp_conf_val_is_false(const char *val);
+void gp_conf_node_prune(gp_conf_node *node);
+int gp_conf_remove(const char *name);
+int gp_conf_node_has_children(const gp_conf_node *node);
+
+gp_conf_node *gp_conf_get_child_with_default(const gp_conf_node *base, const gp_conf_node *dflt, const char *name);
+gp_conf_node *gp_conf_node_lookup_key_value(const gp_conf_node *base, const char *key, const char *value);
+int gp_conf_get_child_value(const gp_conf_node *base, const char *name, const char **vptr);
+int gp_conf_get_child_value_int(const gp_conf_node *base, const char *name, intmax_t *val);
+int gp_conf_get_child_value_bool(const gp_conf_node *base, const char *name, int *val);
+int gp_conf_get_child_value_with_default(const gp_conf_node *base, const gp_conf_node *dflt, const char *name, const char **vptr);
+int gp_conf_get_child_value_int_with_default(const gp_conf_node *base, const gp_conf_node *dflt, const char *name, intmax_t *val);
+int gp_conf_get_child_value_bool_with_default(const gp_conf_node *base, const gp_conf_node *dflt, const char *name, int *val);
+char *gp_conf_load_complete_include_path(const char *);
+int gp_conf_node_is_sequence(const gp_conf_node *node);
+int gp_conf_yaml_load_file(const char *);                                  
+int gp_conf_yaml_load_string(const char *, size_t);
+int gp_conf_yaml_load_file_with_prefix(const char *filename, const char *prefix);
+
+size_t strlcpy(char *dst, const char *src, size_t siz);
+size_t strlcat(char *dst, const char *src, size_t siz);
 
 
 #endif
