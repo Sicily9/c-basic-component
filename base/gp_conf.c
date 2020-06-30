@@ -5,6 +5,8 @@
 /** Maximum size of a complete domain name. */
 #define NODE_NAME_MAX 1024
 
+static gp_conf_node *root = NULL;
+static gp_conf_node *root_backup = NULL;
 
 size_t strlcat(dst, src, siz)                                                         
     char *dst;
@@ -63,10 +65,6 @@ size_t strlcpy(dst, src, siz)
     return(s - src - 1); /* count does not include NUL */
 }
 
-
-
-static gp_conf_node *root = NULL;
-static gp_conf_node *root_backup = NULL;
 
 static gp_conf_node *gp_conf_get_node_or_create(const char *name, int final)
 		{
@@ -541,7 +539,7 @@ void gp_conf_restore_context_backup(void)
     return;
 }
 
-void gp_conf_de_init(void)
+void gp_conf_deinit(void)
 {
     if (root != NULL) {
         gp_conf_node_free(root);
