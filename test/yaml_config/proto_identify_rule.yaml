@@ -1,0 +1,192 @@
+%YAML 1.1
+---
+proto_identify_rules:
+  -
+    rule_shift: yes
+    rule_id: 1
+    protocol: http
+    layer4_proto: tcp
+    finger_direc: request
+    finger_depth: 3
+    finger_minlen: 13
+    finger_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+      -
+        x1:
+        x2:
+        x3:
+        x4:
+        x5:
+    finger_pugin: http_tcp_plugin
+    finger_bpf_vm: 
+    verify_shift:
+    verify_direc:
+    verify_depth:
+    verify_minlen:
+    verify_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+    verify_plugin:
+    verify_bpf_vm:
+    store_shift: yes
+
+  -
+    rule_shift: yes
+    rule_id: 3
+    protocol: ftp
+    layer4_proto: tcp
+    finger_direc: request
+    finger_depth: 3
+    finger_minlen: 13
+    finger_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+      -
+        x1:
+        x2:
+        x3:
+        x4:
+        x5:
+    finger_pugin: http_tcp_plugin
+    finger_bpf_vm: 
+    verify_shift:
+    verify_direc:
+    verify_depth:
+    verify_minlen:
+    verify_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+    verify_plugin:
+    verify_bpf_vm:
+    store_shift: yes
+
+  -
+    rule_shift: yes
+    rule_id: 4
+    protocol: ftp
+    layer4_proto: tcp
+    finger_direc: request
+    finger_depth: 3
+    finger_minlen: 13
+    finger_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+      -
+        x1:
+        x2:
+        x3:
+        x4:
+        x5:
+    finger_pugin: http_tcp_plugin
+    finger_bpf_vm: 
+    verify_shift:
+    verify_direc:
+    verify_depth:
+    verify_minlen:
+    verify_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+    verify_plugin:
+    verify_bpf_vm:
+    store_shift: yes
+
+  -
+    rule_shift: yes
+    rule_id: 4
+    protocol: ftp
+    layer4_proto: tcp
+    finger_direc: request
+    finger_depth: 3
+    finger_minlen: 13
+    finger_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+      -
+        x1:
+        x2:
+        x3:
+        x4:
+        x5:
+    finger_pugin: http_tcp_plugin
+    finger_bpf_vm: 
+    verify_shift:
+    verify_direc:
+    verify_depth:
+    verify_minlen:
+    verify_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+    verify_plugin:
+    verify_bpf_vm:
+    store_shift: yes
+
+  -
+    rule_shift: yes
+    rule_id: 5
+    protocol: ftp
+    layer4_proto: tcp
+    finger_direc: request
+    finger_depth: 3
+    finger_minlen: 13
+    finger_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+      -
+        x1:
+        x2:
+        x3:
+        x4:
+        x5:
+    finger_pugin: http_tcp_plugin
+    finger_bpf_vm: 
+    verify_shift:
+    verify_direc:
+    verify_depth:
+    verify_minlen:
+    verify_match:
+      -
+        x1: 0
+        x2: 0
+        x3: 9
+        x4: xxx
+        x5: ....
+    verify_plugin:
+    verify_bpf_vm:
+    store_shift: yes

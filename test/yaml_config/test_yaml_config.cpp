@@ -39,7 +39,7 @@ logging:\n\
 	//gp_conf_yaml_load_string(input, strlen(input));
 	gp_conf_create_context_backup();
 	gp_conf_init();
-	gp_conf_yaml_load_file("/home/xiaobear/code/github/c-basic-component/test/yaml_config/config.yaml");
+	gp_conf_yaml_load_file("/home/xc/code/github/c-basic-component/test/yaml_config/config.yaml");
 	gp_conf_dump();
 
 	gp_conf_node *outputs;
@@ -81,31 +81,24 @@ TEST(TestYamlConfig, TestParse2) {
 	gp_conf_create_context_backup();
 	gp_conf_init();
 
-	gp_conf_yaml_load_file("/home/xiaobear/code/github/c-basic-component/test/yaml_config/config2.yaml");
+	gp_conf_yaml_load_file("/home/xc/code/github/c-basic-component/test/yaml_config/config2.yaml");
 	gp_conf_dump();
-	gp_conf_node *outputs;
-	gp_conf_node *outputs2;
-	gp_conf_node *output_param;
-    gp_conf_node *root = gp_conf_get_root_node();
-	printf("%s:%s\n", root->name, root->val);
-	
-    outputs = TAILQ_FIRST(&root->head);
-	printf("%s:%s\n", outputs->name, outputs->val);
 
-    output_param = TAILQ_FIRST(&outputs->head);
-	printf("%s:%s\n", output_param->name, output_param->val);
-
-    output_param = TAILQ_FIRST(&output_param->head);
-	printf("%s:%s\n", output_param->name, output_param->val);
-
-    output_param = TAILQ_FIRST(&output_param->head);
-	printf("%s:%s\n", output_param->name, output_param->val);
-
-    outputs2 = TAILQ_NEXT(outputs, next);
-	printf("%s:%s\n", outputs2->name, outputs2->val);
 	gp_conf_deinit();
 	gp_conf_restore_context_backup();
 }
+
+TEST(TestYamlConfig, TestParse3) {
+	gp_conf_create_context_backup();
+	gp_conf_init();
+	gp_conf_yaml_load_file("/home/xc/code/github/c-basic-component/test/yaml_config/proto_identify_rule.yaml");
+	gp_conf_dump();
+
+	gp_conf_deinit();
+	gp_conf_restore_context_backup();
+
+}
+
 int main(int argc, char **argv){
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
