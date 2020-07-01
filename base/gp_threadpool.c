@@ -125,6 +125,10 @@ void destroy_task(gp_task *task)
 	free(task);
 }
 
+gp_task * pop_task(gp_task_processor *gp_tp){
+
+}
+
 void run_task(gp_task *task)
 {
 	gp_task_processor *gp_tp = task->task_tp;
