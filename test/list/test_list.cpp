@@ -73,7 +73,7 @@ struct student *find_student_id(int id, gp_list * list){
     return NULL;
 }
 
-#define NUM 50000
+#define NUM 5000
 
 TEST_F(TestListTime, TestListFindByIDTime) {
     start_benchmark()

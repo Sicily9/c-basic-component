@@ -100,7 +100,7 @@ protected:
 TEST_F(TestDictTime, TestDictStringAddTime) {
     start_benchmark()
     int j = 0;
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         dictAdd(string_dict, sdsfromlonglong(j), (void *)&j);
     }
     end_benchmark("TestDictStringAdd")
@@ -108,11 +108,11 @@ TEST_F(TestDictTime, TestDictStringAddTime) {
 
 TEST_F(TestDictTime, TestDictStringFindTime) {
     int j = 0;
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         dictAdd(string_dict, sdsfromlonglong(j), (void *)&j);
     }
     start_benchmark()
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         sds key = sdsfromlonglong(j);
         dictFind(string_dict,key);
     }
@@ -122,7 +122,7 @@ TEST_F(TestDictTime, TestDictStringFindTime) {
 TEST_F(TestDictTime, TestDictIntAddTime) {
     start_benchmark()
     int j = 0;
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         dictAdd(int_dict, (void *)&j, (void *)&j);
     }
     end_benchmark("TestDictIntAdd")
@@ -130,11 +130,11 @@ TEST_F(TestDictTime, TestDictIntAddTime) {
 
 TEST_F(TestDictTime, TestDictIntFindTime) {
     int j = 0;
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         dictAdd(int_dict, (void *)&j, (void *)&j);
     }
     start_benchmark()
-    for (j = 0; j < 5000000; j++) {
+    for (j = 0; j < 50000; j++) {
         dictFind(int_dict,(void *)&j);
     }
     end_benchmark("TestDictIntFind")
