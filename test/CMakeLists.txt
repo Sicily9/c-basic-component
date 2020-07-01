@@ -23,4 +23,10 @@ if(test)
 	build_target(T "gp_loop" SRC ${loop_src} LIBS ${lib_dep})
 	build_target(T "gp_thread" SRC ${thread_src} LIBS ${lib_dep})
 	build_target(T "gp_threadpool" SRC ${threadpool_src} LIBS ${lib2_dep})
+
+	add_custom_command(TARGET gp_threadpool
+			           POST_BUILD
+				       COMMAND make test
+	)
+
 endif()

@@ -1,0 +1,13 @@
+%YAML 1.1
+---
+logging:
+  output:
+    - 
+      interface: console
+      log-level: error
+    -
+      interface: syslog
+      facility: local4
+      log-level: info
+                          
+
