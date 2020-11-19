@@ -1,7 +1,7 @@
 #include <time.h>
 #include "gp.h"
 
-unsigned long gp_time(gp_clocktype type)
+uint64_t gp_time(gp_clocktype type)
 {
 	static clock_t fast_clock_id = -1;
 	struct timespec t;
@@ -23,12 +23,12 @@ unsigned long gp_time(gp_clocktype type)
 	if(clock_gettime(clock_id, &t))
 		return 0;
 
-	return (t.tv_sec * (unsigned long) 1e9 + t.tv_nsec)/1000000; //1ms resolution
+	return (t.tv_sec * (uint64_t) 1e9 + t.tv_nsec)/1000000; //1ms resolution
 }
 
 /*---------------------------------------gp_timer_list----------------------------------------*/
 
-void create_gp_timer(gp_timer_list **timer, void (*fn)(void *), void *data, unsigned long expires, int interval, int repeat)
+void create_gp_timer(gp_timer_list **timer, void (*fn)(void *), void *data, uint32_t expires, int32_t interval, int32_t repeat)
 {
 	gp_timer_list *tmp = malloc(sizeof(gp_timer_list));
 	memset(tmp, 0, sizeof(*tmp));
@@ -36,7 +36,7 @@ void create_gp_timer(gp_timer_list **timer, void (*fn)(void *), void *data, unsi
 	*timer = tmp;
 }
 
-void init_gp_timer(gp_timer_list *timer, void (*fn)(void *), void *data, unsigned long expires, int interval, int repeat)
+void init_gp_timer(gp_timer_list *timer, void (*fn)(void *), void *data, uint32_t expires, int32_t interval, int32_t repeat)
 {
 	GP_LIST_NODE_INIT(&timer->node);
 	timer->loop = NULL;
@@ -64,10 +64,10 @@ void destruct_gp_timer(gp_timer_list *timer)
 }
 
 
-static unsigned long gp_next_timer(gp_timer_base *base)
+static uint32_t gp_next_timer(gp_timer_base *base)
 {
-	unsigned long timer_jiffies = base->timer_jiffies;
-	unsigned long expires = MAX_TVAL;
+	uint32_t timer_jiffies = base->timer_jiffies;
+	uint32_t expires = MAX_TVAL;
 	
 	int index, slot, array, found = 0;
 	gp_timer_list *timer;
@@ -103,7 +103,7 @@ cascade:
         do {
             GP_LIST_FOREACH(varp->vec+slot, timer) {
                 found = 1; 
-                if ((long)(timer->expires - expires) < 0)
+                if (((int64_t)timer->expires - (int64_t)expires) < 0)
                     expires = timer->expires;
             }
             if (found) {
@@ -123,11 +123,11 @@ cascade:
 
 static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
 {
-	unsigned long expires = timer->expires ;
-    unsigned long idx = expires - base->timer_jiffies;
+	uint32_t expires = timer->expires ;
+    uint32_t idx = expires - base->timer_jiffies;
     gp_list *vec;
 
-	int i = 0;
+	int32_t i = 0;
     if (idx < TVR_SIZE) {
         i = expires & TVR_MASK;
         vec = base->tv1.vec + i; 
@@ -140,13 +140,15 @@ static void gp_timer_internal_add(gp_timer_base *base, gp_timer_list *timer)
     } else if (idx < 1 << (TVR_BITS + 3 * TVN_BITS)) {
         i = (expires >> (TVR_BITS + 2 * TVN_BITS)) & TVN_MASK;
         vec = base->tv4.vec + i; 
-    } else if ((signed long) idx < 0) { 
+    } else if ((int64_t) idx < 0) { 
         vec = base->tv1.vec + (base->timer_jiffies & TVR_MASK);
 	} else {
+		#if 1
         if (idx > MAX_TVAL) {
             idx = MAX_TVAL;
             expires = idx + base->timer_jiffies;
         }
+		#endif
         i = (expires >> (TVR_BITS + 3 * TVN_BITS)) & TVN_MASK;
         vec = base->tv5.vec + i;
     }
@@ -166,7 +168,7 @@ void gp_timer_del(gp_timer_list *timer)
 	gp_list_node_remove(&timer->node);
 }
 
-void gp_timer_mod(gp_timer_base *base, gp_timer_list *timer, unsigned long expires, int interval, int repeat)
+void gp_timer_mod(gp_timer_base *base, gp_timer_list *timer, uint32_t expires, int32_t interval, int32_t repeat)
 {
 	gp_timer_del(timer);
 	timer->expires = expires;
@@ -178,7 +180,7 @@ void gp_timer_mod(gp_timer_base *base, gp_timer_list *timer, unsigned long expir
 /*---------------------------------------gp_timer_base----------------------------------------*/
 
 
-void create_gp_timer_base(gp_timer_base **base, unsigned long jiffies)
+void create_gp_timer_base(gp_timer_base **base, uint32_t jiffies)
 {
 	gp_timer_base *base_t = malloc(sizeof(*base_t));
 	memset(base_t, 0, sizeof(*base_t));
@@ -186,7 +188,7 @@ void create_gp_timer_base(gp_timer_base **base, unsigned long jiffies)
 	*base = base_t;
 }
 
-void init_gp_timer_base(gp_timer_base *base, unsigned long jiffies)
+void init_gp_timer_base(gp_timer_base *base, uint32_t jiffies)
 {
 	int i = 0;
 	base->timer_jiffies = jiffies;
@@ -205,7 +207,7 @@ void init_gp_timer_base(gp_timer_base *base, unsigned long jiffies)
 
 void destruct_gp_timer_base(gp_timer_base *base)
 {
-	int i;
+	int32_t i;
 	gp_timer_list *tmp;
 	gp_list *root = NULL;
 	for (i = 0; i < TVR_SIZE; i++) {
@@ -239,7 +241,7 @@ void destruct_gp_timer_base(gp_timer_base *base)
 	free(base);
 }
 
-static void cascade(tvec *tv, int index)
+static void cascade(tvec *tv, int32_t index)
 {
 	gp_timer_list *timer = NULL;
 	gp_timer_list *tmp =NULL;
@@ -249,14 +251,14 @@ static void cascade(tvec *tv, int index)
 	}
 }
 
-void gp_run_timers(gp_timer_base *base, unsigned long jiffies)
+void gp_run_timers(gp_timer_base *base, uint32_t jiffies)
 {
 	gp_timer_list *timer = NULL;
 	gp_timer_list *tmp = NULL;
-	while( (long)(jiffies - base->timer_jiffies) >= 0){
-		int index = base->timer_jiffies & TVR_MASK;
+	while( ((int32_t)jiffies - (int32_t)base->timer_jiffies) >= 0){
+		int32_t index = base->timer_jiffies & TVR_MASK;
 		if (index == 0) {
-			int i = INDEX(base, 0);
+			int32_t i = INDEX(base, 0);
 			cascade(&base->tv2, i);
 			if (i == 0) {
 				i = INDEX(base, 1);

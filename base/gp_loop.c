@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 /*-----------------------------timer------------------------------------*/ 
-void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int interval, int repeat)
+void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int32_t interval, int32_t repeat)
 {
 	gp_timer_list *timer = NULL;
 	create_gp_timer(&timer, fn, data, loop->time + interval, interval, repeat);
@@ -15,8 +15,7 @@ void gp_loop_timer_stop(gp_timer_list *timer)
 	gp_timer_del(timer);
 
 }
-
-void gp_loop_timer_mod(gp_loop *loop, gp_timer_list *timer, unsigned long expires, int interval, int repeat)
+void gp_loop_timer_mod(gp_loop *loop, gp_timer_list *timer, uint32_t expires, int32_t interval, int32_t repeat)
 {
 	gp_timer_mod(loop->timer_base, timer, expires, interval, repeat);
 }
@@ -33,7 +32,7 @@ void gp_loop_update_time(gp_loop *loop)
 
 /*--------------------------------------gp_io---------------------------------------*/
 
-static unsigned int next_power_of_two(unsigned int val)
+static unsigned int next_power_of_two(uint32_t val)
 {
 	val -= 1;
 	val |= val >> 1;
@@ -45,13 +44,13 @@ static unsigned int next_power_of_two(unsigned int val)
 	return val;
 }
 
-static void maybe_resize(gp_loop *loop, unsigned int len) 
+static void maybe_resize(gp_loop *loop, uint32_t len) 
 {
  	gp_io** watchers;
   	void* fake_watcher_list;
   	void* fake_watcher_count;
-    unsigned int nwatchers;
-  	unsigned int i;
+    uint32_t nwatchers;
+  	uint32_t i;
 
   	if (len <= loop->nwatchers)
     		return;
@@ -83,7 +82,7 @@ static void maybe_resize(gp_loop *loop, unsigned int len)
 
 }
 
-void create_gp_io(gp_io **w, gp_io_cb cb, int fd)
+void create_gp_io(gp_io **w, gp_io_cb cb, int32_t fd)
 {
 	gp_io *w_t = malloc(sizeof(gp_io));
 	memset(w_t, 0, sizeof(gp_io));
@@ -91,7 +90,7 @@ void create_gp_io(gp_io **w, gp_io_cb cb, int fd)
 	*w = w_t;
 }
 
-void init_gp_io(gp_io *w, gp_io_cb cb, int fd)
+void init_gp_io(gp_io *w, gp_io_cb cb, int32_t fd)
 {
 	GP_LIST_NODE_INIT(&w->pending_node);
 	GP_LIST_NODE_INIT(&w->watcher_node);
@@ -101,7 +100,7 @@ void init_gp_io(gp_io *w, gp_io_cb cb, int fd)
 	w->pevents = 0;
 }
 
-void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events)
+void gp_io_start(gp_loop *loop, gp_io *w, uint32_t events)
 {
 	w->pevents |= events;
 	maybe_resize(loop, w->fd + 1);
@@ -116,9 +115,9 @@ void gp_io_start(gp_loop *loop, gp_io *w, unsigned int events)
 	}
 }
 
-void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events)
+void gp_io_stop(gp_loop *loop, gp_io *w, uint32_t events)
 {
-	if((unsigned int) w->fd >= loop->nwatchers)
+	if((uint32_t) w->fd >= loop->nwatchers)
 		return;
 
 	w->pevents &= ~events;
@@ -134,21 +133,21 @@ void gp_io_stop(gp_loop *loop, gp_io *w, unsigned int events)
 		gp_list_append(&loop->watcher_list, w);
 }
 
-void gp_io_poll(gp_loop *loop, unsigned long timeout)
+void gp_io_poll(gp_loop *loop, uint32_t timeout)
 {
-	static const int max_safe_timeout = MAX_TVAL;
+	static const int32_t max_safe_timeout = MAX_TVAL;
  	struct epoll_event events[1024];
   	struct epoll_event* pe;
   	struct epoll_event e;
-  	int real_timeout;
+  	int32_t real_timeout;
   	gp_io* w, *tmp;
-  	uint64_t base;
-  	int nevents;
-  	int count;
-  	int nfds;
-  	int fd;
-  	int op;
-  	int i;
+  	uint32_t base;
+  	int32_t nevents;
+  	int32_t count;
+  	int32_t nfds;
+  	int32_t fd;
+  	int32_t op;
+  	int32_t i;
 
   	if (loop->nfds == 0) { 
     		return;
@@ -249,7 +248,7 @@ void gp_io_poll(gp_loop *loop, unsigned long timeout)
     loop->watchers[loop->nwatchers] = NULL;
     loop->watchers[loop->nwatchers + 1] = NULL;
 
-	printf("hahaha timeout:%lu, nfds:%d\n", timeout, nfds);
+	printf("hahaha timeout:%u, nfds:%d\n", timeout, nfds);
 
     if (nevents != 0) {
       	if (nfds == 1024 && --count != 0) {
@@ -285,7 +284,7 @@ int create_gp_loop(gp_loop **loop)
 	return 0;
 }
 
-int init_gp_loop(gp_loop *loop)
+int32_t init_gp_loop(gp_loop *loop)
 {
 	gp_loop_update_time(loop);
 	loop->timer_base = NULL;
@@ -301,9 +300,9 @@ int init_gp_loop(gp_loop *loop)
 	return 0;
 }
 
-int gp_loop_run(gp_loop *loop, gp_run_mode mode)
+int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 {
-	unsigned long timeout;
+	uint32_t timeout;
 	while(loop->stop_flags == 0){
 		gp_loop_run_timers(loop);
 		timeout = 0;

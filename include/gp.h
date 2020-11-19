@@ -74,23 +74,23 @@ struct gp_io_s {
     gp_io_cb cb; 
     gp_list_node pending_node;
     gp_list_node watcher_node;
-    unsigned int pevents;
-    unsigned int events;
+    uint32_t pevents;
+    uint32_t events;
     int fd; 
 };
 
 //TODO: add handle base class
 struct gp_loop_s {
-    unsigned int stop_flags;
-    unsigned long flags;
+    uint32_t stop_flags;
+    uint32_t flags;
     int backend_fd;
     gp_list pending_list;
     gp_list watcher_list;
     gp_io **watchers;
-    unsigned long time;
+    uint32_t time;
     gp_timer_base *timer_base;
-    unsigned int nwatchers;
-    unsigned int nfds;
+    uint32_t nwatchers;
+    uint32_t nfds;
 };
 
 
@@ -136,7 +136,7 @@ struct gp_task_s {
     gp_cb                task_cb;  //task对应的 处理函数
     gp_task_processor *task_tp;    //task 管理结构
     gp_thread_manager *task_tmr;
-    unsigned         task_busy;
+    uint32_t         task_busy;
     gp_mtx        task_mtx;
     gp_cv             task_cv;
 };
@@ -262,8 +262,8 @@ struct tvec_root_s {
 };
 
 struct gp_timer_base_s {
-    unsigned long timer_jiffies;
-    unsigned long next_timer;
+    uint32_t timer_jiffies;
+    uint32_t next_timer;
     tvec_root tv1;
     tvec tv2;
     tvec tv3;
@@ -274,12 +274,12 @@ struct gp_timer_base_s {
 struct gp_timer_list_s {
     gp_list_node node;
     gp_loop *loop;
-    unsigned long expires;
-    int interval;
-    int repeat;
+    uint32_t expires;
+    int32_t interval;
+    int32_t repeat;
     void (*callback)(void *);
     void *data;
-    unsigned int state;
+    uint32_t state;
 };
 
 #define CACHE_LINE_SIZE 64
@@ -338,17 +338,17 @@ extern void create_gp_io(gp_io **, gp_io_cb, int);
 extern void init_gp_io(gp_io *, gp_io_cb, int);
 extern void gp_io_stop(gp_loop *, gp_io *, unsigned int);
 extern void gp_io_start(gp_loop *, gp_io *, unsigned int);
-extern void gp_io_poll(gp_loop *, unsigned long);
+extern void gp_io_poll(gp_loop *, uint32_t);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern int create_gp_loop(gp_loop **);
-extern int init_gp_loop(gp_loop *); 
+extern int32_t create_gp_loop(gp_loop **);
+extern int32_t init_gp_loop(gp_loop *); 
 //extern int gp_loop_alive(gp_loop *loop);
-extern int gp_loop_run(gp_loop *, gp_run_mode);
+extern int32_t gp_loop_run(gp_loop *, gp_run_mode);
 
-extern void gp_loop_timer_start(gp_loop *, void (*fn)(void *), void *, int , int );
+extern void gp_loop_timer_start(gp_loop *, void (*fn)(void *), void *, int32_t , int32_t );
 extern void gp_loop_timer_stop(gp_timer_list *);
-extern void gp_loop_timer_mod(gp_loop *, gp_timer_list *,unsigned long, int, int);
+extern void gp_loop_timer_mod(gp_loop *, gp_timer_list *,uint32_t, int32_t, int32_t);
 extern void gp_loop_run_timers(gp_loop *);
 extern void gp_loop_update_time(gp_loop *);
 
@@ -636,17 +636,17 @@ extern void gp_register_module(gp_module_desc *desc);
 
 /*---------------------------------------------gp_timer-------------------------------------------------*/
 
-extern void create_gp_timer(gp_timer_list **, void (*fn)(void *), void *, unsigned long, int, int);
-extern void init_gp_timer(gp_timer_list *, void (*fn)(void *), void *, unsigned long, int, int);
+extern void create_gp_timer(gp_timer_list **, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
+extern void init_gp_timer(gp_timer_list *, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
 extern void gp_timer_add(gp_timer_base *, gp_timer_list *);
 extern void gp_timer_del(gp_timer_list *);
-extern void gp_timer_mod(gp_timer_base *, gp_timer_list *, unsigned long, int, int);
+extern void gp_timer_mod(gp_timer_base *, gp_timer_list *, uint32_t, int32_t, int32_t);
 extern void destruct_gp_timer(gp_timer_list *);
-extern void create_gp_timer_base(gp_timer_base **, unsigned long);
-extern void init_gp_timer_base(gp_timer_base *, unsigned long);
-extern void gp_run_timers(gp_timer_base *, unsigned long);
+extern void create_gp_timer_base(gp_timer_base **, uint32_t);
+extern void init_gp_timer_base(gp_timer_base *, uint32_t);
+extern void gp_run_timers(gp_timer_base *, uint32_t);
 extern void destruct_gp_timer_base(gp_timer_base *);
-extern unsigned long gp_time(gp_clocktype);
+extern uint64_t gp_time(gp_clocktype);
 
 
 /*----------------------------------------------gp_ring---------------------------------------------*/
@@ -662,7 +662,7 @@ void gp_conf_deinit(void);
 gp_conf_node *gp_conf_get_root_node(void);
 int gp_conf_get(const char *name, const char **vptr);
 int gp_conf_get_value(const char *name, const char **vptr);
-int gp_conf_get_Int(const char *name, intmax_t *val);
+int gp_conf_get_int(const char *name, int *val);
 int gp_conf_get_bool(const char *name, int *val);
 int gp_conf_get_double(const char *name, double *val);
 int gp_conf_get_float(const char *name, float *val);
@@ -674,6 +674,7 @@ void gp_conf_node_dump(const gp_conf_node *node, const char *prefix);
 gp_conf_node *gp_conf_node_new(void);
 void gp_conf_node_free(gp_conf_node *);
 gp_conf_node *gp_conf_get_node(const char *key);
+gp_conf_node *gp_conf_get_node_in_array(const char *head_name, int i, const char *name);
 void gp_conf_create_context_backup(void);
 void gp_conf_restore_context_backup(void);
 gp_conf_node *gp_conf_node_lookup_child(const gp_conf_node *node, const char *key);
@@ -686,6 +687,7 @@ int gp_conf_val_is_false(const char *val);
 void gp_conf_node_prune(gp_conf_node *node);
 int gp_conf_remove(const char *name);
 int gp_conf_node_has_children(const gp_conf_node *node);
+int gp_conf_get_siblings_num(gp_conf_node * node);
 
 gp_conf_node *gp_conf_get_child_with_default(const gp_conf_node *base, const gp_conf_node *dflt, const char *name);
 gp_conf_node *gp_conf_node_lookup_key_value(const gp_conf_node *base, const char *key, const char *value);
