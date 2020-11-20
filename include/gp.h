@@ -19,7 +19,10 @@
 	#define unlikely(x)   __builtin_expect((x), 0)
 #endif
 
+
 typedef struct gp_loop_s gp_loop;
+typedef struct gp_handler_s gp_handler;
+typedef struct gp_epoller_s gp_epoller;
 typedef struct gp_io_s gp_io;
 typedef struct gp_list_s gp_list;
 typedef struct gp_list_node_s gp_list_node;
@@ -47,8 +50,7 @@ typedef struct gp_task_wait_strategy_s gp_task_wait_strategy;
 typedef void (*gp_io_cb)(gp_loop *loop, gp_io *w, unsigned int events);
 typedef void (*gp_cb)(void *);
 typedef void (*gp_thread_fn)(void *);
-
-
+typedef void (*gp_event_callback)(void);
 
 enum gp_run_mode_s{
     GP_RUN_DEFAULT = 0,
@@ -56,8 +58,6 @@ enum gp_run_mode_s{
     GP_RUN_NOWAIT
 };
 typedef enum gp_run_mode_s gp_run_mode;
-
-
 
 //doubly list
 struct gp_list_node_s {
@@ -81,19 +81,45 @@ struct gp_io_s {
 
 //TODO: add handle base class
 struct gp_loop_s {
-    uint32_t stop_flags;
-    uint32_t flags;
-    int backend_fd;
-    gp_list pending_list;
-    gp_list watcher_list;
-    gp_io **watchers;
-    uint32_t time;
+    uint32_t      stop_flags;
+    uint32_t      flags;
+    int32_t       backend_fd;
+    uint32_t      time;
+    uint32_t      nwatchers;
+    uint32_t      nfds;
+
+    gp_io         **watchers;
     gp_timer_base *timer_base;
-    uint32_t nwatchers;
-    uint32_t nfds;
+
+    gp_list       pending_list;
+    gp_list       watcher_list;
 };
 
+struct gp_handler_s{
+    int8_t		  add_to_loop;
+    int8_t		  event_handling;
 
+	int32_t       _index;
+    int32_t       fd;
+    int32_t       _events;
+    int32_t       _revents;
+
+    gp_loop       *loop;
+
+    gp_event_callback _read_callback;
+    gp_event_callback _write_callback;
+    gp_event_callback _close_callback;
+    gp_event_callback _error_callback;
+};
+
+struct epoll_event;
+typedef struct epoll_event* event_list;
+struct gp_epoller_s{
+	int32_t    _epollfd;
+	event_list _events;
+	int32_t    _events_len;
+	gp_dict	   _handlers;
+};
 
 struct gp_mtx_s {
     pthread_mutex_t mtx;
