@@ -7,9 +7,14 @@
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 #include <ctype.h>
 #include <pthread.h>
 #include <sys/queue.h>
+#define __USE_GNU
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
 
 #ifndef likely
 	#define likely(x)     __builtin_expect((x), 1)
@@ -19,10 +24,15 @@
 	#define unlikely(x)   __builtin_expect((x), 0)
 #endif
 
-
+typedef struct gp_inet_address_s gp_inet_address;
+typedef struct gp_pending_task_s gp_pending_task;
 typedef struct gp_loop_s gp_loop;
 typedef struct gp_handler_s gp_handler;
 typedef struct gp_epoller_s gp_epoller;
+typedef struct gp_acceptor_s gp_acceptor;
+typedef struct gp_tcp_server_s gp_tcp_server;
+typedef struct gp_tcp_connection_s gp_tcp_connection;
+typedef struct gp_buffer_s gp_buffer;
 typedef struct gp_io_s gp_io;
 typedef struct gp_list_s gp_list;
 typedef struct gp_list_node_s gp_list_node;
@@ -50,7 +60,13 @@ typedef struct gp_task_wait_strategy_s gp_task_wait_strategy;
 typedef void (*gp_io_cb)(gp_loop *loop, gp_io *w, unsigned int events);
 typedef void (*gp_cb)(void *);
 typedef void (*gp_thread_fn)(void *);
-typedef void (*gp_event_callback)(void);
+typedef void (*gp_event_callback)(gp_handler *);
+typedef void (*gp_connection_callback)(gp_tcp_connection *);
+typedef void (*gp_close_callback)(gp_tcp_connection *);
+typedef void (*gp_write_complete_callback)(gp_tcp_connection *);
+typedef void (*gp_message_callback)(gp_tcp_connection *, gp_buffer*);
+typedef void (*gp_new_connection_callback)(int32_t, gp_inet_address *);
+typedef void (*gp_pending_func)(gp_tcp_server *, gp_tcp_connection *, char *, int);
 
 enum gp_run_mode_s{
     GP_RUN_DEFAULT = 0,
@@ -81,31 +97,34 @@ struct gp_io_s {
 
 //TODO: add handle base class
 struct gp_loop_s {
-    uint32_t      stop_flags;
+    int8_t        quit;
+    int8_t        looping;
+    int8_t        calling_pending_functors;
+    int32_t       wakeup_fd;
+    int64_t       tid;
     uint32_t      flags;
-    int32_t       backend_fd;
     uint32_t      time;
-    uint32_t      nwatchers;
-    uint32_t      nfds;
-
-    gp_io         **watchers;
+	
     gp_timer_base *timer_base;
+	gp_epoller    *epoller;
+	gp_handler	  *wakeup_handler;
 
+    gp_list       active_handler_list;
     gp_list       pending_list;
-    gp_list       watcher_list;
 };
 
 struct gp_handler_s{
-    int8_t		  add_to_loop;
-    int8_t		  event_handling;
+    int8_t		  	  add_to_loop;
+    int8_t		  	  event_handling;
 
-	int32_t       _index;
-    int32_t       fd;
-    int32_t       _events;
-    int32_t       _revents;
+	int32_t       	  index;
+    int32_t       	  fd;
+    int32_t       	  _events;
+    int32_t       	  _revents;
 
-    gp_loop       *loop;
+    gp_loop       	  *loop;
 
+	gp_list_node	  handler_node;
     gp_event_callback _read_callback;
     gp_event_callback _write_callback;
     gp_event_callback _close_callback;
@@ -115,10 +134,89 @@ struct gp_handler_s{
 struct epoll_event;
 typedef struct epoll_event* event_list;
 struct gp_epoller_s{
-	int32_t    _epollfd;
-	event_list _events;
-	int32_t    _events_len;
-	gp_dict	   _handlers;
+	int32_t    epollfd;
+	event_list events;
+	int32_t    events_len;
+	dict	   *handlers;
+};
+
+struct gp_acceptor_s{
+	uint8_t		listenning;
+	uint32_t	fd;
+	gp_loop 	*loop;
+	gp_handler  *accept_handler;
+	gp_new_connection_callback new_connection_callback;
+};
+
+struct gp_inet_address_s{
+	union {
+		struct sockaddr_in  addr;
+		struct sockaddr_in6 addr6;
+	};
+};
+
+enum gp_state {
+	k_disconnected,
+	k_connecting,
+	k_connected,
+	k_disconnecting
+};
+
+struct gp_tcp_connection_s{
+	gp_loop *loop;
+	gp_handler *handler;
+	int32_t fd;
+	gp_inet_address local_addr;
+	gp_inet_address peer_addr;
+	gp_buffer *input_buffer;
+	gp_buffer *output_buffer;
+	enum gp_state state;
+	gp_connection_callback 		 connection_callback;
+	gp_close_callback 		 	 close_callback;
+	gp_message_callback    		 message_callback;
+	gp_write_complete_callback   write_complete_callback;
+};
+
+struct gp_buffer_s{
+	char 	*buffer;
+	size_t  len;
+	size_t  reader_index;
+	size_t  writer_index;
+};
+
+
+enum{
+    GP_RUN_IN_LOOP_TRANS = 0,
+    GP_RUN_IN_LOOP_CONN,
+    GP_RUN_IN_LOOP_REMOVE_CONN,
+    GP_RUN_IN_LOOP_SERVER_START,
+};
+
+struct gp_pending_task_s{
+	int8_t				type;
+	gp_pending_func		pending_func;
+
+	gp_tcp_server		*tcp_server;
+	gp_tcp_connection	*conn;
+	char				*msg;
+	int					len;
+	
+	gp_list_node		pending_task_node;
+};
+
+
+struct gp_tcp_server_s{
+	char					   name[15];
+	char				       hostport[5];
+	int32_t					   next_conn_id;
+	int32_t					   started;
+	gp_loop 				   *loop;
+	gp_acceptor 			   *acceptor;
+	dict 				       *connections;
+	
+	gp_message_callback 	   message_callback;
+	gp_write_complete_callback write_complete_callback;
+	gp_connection_callback 	   connection_callback;
 };
 
 struct gp_mtx_s {
@@ -360,28 +458,105 @@ typedef struct gp_conf_node_ {
 
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void create_gp_io(gp_io **, gp_io_cb, int);
-extern void init_gp_io(gp_io *, gp_io_cb, int);
-extern void gp_io_stop(gp_loop *, gp_io *, unsigned int);
-extern void gp_io_start(gp_loop *, gp_io *, unsigned int);
-extern void gp_io_poll(gp_loop *, uint32_t);
+
 
 /*-----------------------------------------------------------------------------------------------*/
 extern int32_t create_gp_loop(gp_loop **);
 extern int32_t init_gp_loop(gp_loop *); 
-//extern int gp_loop_alive(gp_loop *loop);
+
 extern int32_t gp_loop_run(gp_loop *, gp_run_mode);
+extern void    gp_loop_timer_start(gp_loop *, void (*fn)(void *), void *, int32_t , int32_t );
+extern void    gp_loop_timer_stop(gp_timer_list *);
+extern void    gp_loop_timer_mod(gp_loop *, gp_timer_list *,uint32_t, int32_t, int32_t);
+extern void    gp_loop_run_timers(gp_loop *);
+extern void    gp_loop_update_time(gp_loop *);
+extern void    gp_loop_quit(gp_loop*);
+extern void    gp_run_in_loop(gp_loop *loop, gp_pending_task *task);
+extern void    gp_queue_in_loop(gp_loop *loop, gp_pending_task *task);
+extern int8_t  is_in_loop_thread(gp_loop *loop);
+extern void    gp_loop_remove_handler(gp_loop*, gp_handler *);
+extern void    gp_loop_update_handler(gp_loop*, gp_handler *);
 
-extern void gp_loop_timer_start(gp_loop *, void (*fn)(void *), void *, int32_t , int32_t );
-extern void gp_loop_timer_stop(gp_timer_list *);
-extern void gp_loop_timer_mod(gp_loop *, gp_timer_list *,uint32_t, int32_t, int32_t);
-extern void gp_loop_run_timers(gp_loop *);
-extern void gp_loop_update_time(gp_loop *);
+/*-----------------------------------------------------------------------------------------------*/
+extern void    create_gp_epoller(gp_epoller **);
+extern void    init_gp_epoller(gp_epoller *);
+extern void    poller_poll(gp_epoller *, int32_t, event_list *);
+extern void    remove_handler(gp_epoller *, gp_handler *);
+extern void    update_handler(gp_epoller *, gp_handler *);
 
+/*-----------------------------------------------------------------------------------------------*/
+extern void    create_gp_handler(gp_handler **, gp_loop *, int fd);
+extern void    init_gp_handler(gp_handler *, gp_loop *, int fd);
+extern void    set_read_callback(gp_handler *, gp_event_callback);
+extern void    set_write_callback(gp_handler *, gp_event_callback);
+extern void    set_close_callback(gp_handler *, gp_event_callback);
+extern void    set_error_callback(gp_handler *, gp_event_callback);
+extern void    set_revents(gp_handler *, int revt);
+extern void    enable_writing(gp_handler *);
+extern void    enable_reading(gp_handler *);
+extern void    disable_writing(gp_handler *);
+extern void    disable_reading(gp_handler *);
+extern void    disable_all(gp_handler *);
+extern int8_t  is_reading(gp_handler *);
+extern int8_t  is_writing(gp_handler *);
+extern int8_t  is_none_event(gp_handler *);
+extern void    handle_event(gp_handler *);
+extern void    handler_remove(gp_handler *);
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void    create_gp_acceptor(gp_acceptor **, gp_loop *, gp_inet_address *);
+extern void    init_gp_acceptor(gp_acceptor *, gp_loop *, gp_inet_address *);
+extern void    set_new_connection_callback(gp_acceptor *, gp_new_connection_callback);
+extern void    acceptor_listen(gp_acceptor *);
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void    create_gp_inet_address(gp_inet_address **, char *, uint16_t, uint8_t);
+extern void    init_gp_inet_address(gp_inet_address *, char *, uint16_t, uint8_t);
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void    create_gp_pending_task(gp_pending_task **, int8_t, gp_pending_func, gp_tcp_server *, gp_tcp_connection *, char *, int );
+extern void    init_gp_pending_task(gp_pending_task *, int8_t, gp_pending_func, gp_tcp_server *, gp_tcp_connection *, char *, int );
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void	   create_gp_tcp_server(gp_tcp_server **, gp_loop *, gp_inet_address *, char *);
+extern void	   init_gp_tcp_server(gp_tcp_server *, gp_loop *, gp_inet_address *, char *);
+extern void    server_set_write_complete_callback(gp_tcp_server *, gp_write_complete_callback);
+extern void    server_set_message_callback(gp_tcp_server *, gp_message_callback);
+extern void    server_set_connection_callback(gp_tcp_server *, gp_connection_callback);
+extern void    start_server(gp_tcp_server *);
+extern gp_tcp_server *   get_tcp_server(void);
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void	   create_gp_tcp_connection(gp_tcp_connection **, gp_loop *, int32_t, gp_inet_address *, gp_inet_address *);
+extern void	   init_gp_tcp_connection(gp_tcp_connection *, gp_loop *, int32_t, gp_inet_address *, gp_inet_address *);
+extern void    conn_set_write_complete_callback(gp_tcp_connection *, gp_write_complete_callback);
+extern void    conn_set_message_callback(gp_tcp_connection *, gp_message_callback);
+extern void    conn_set_connection_callback(gp_tcp_connection *, gp_connection_callback);
+extern void    conn_set_close_callback(gp_tcp_connection *, gp_close_callback);
+extern void    conn_force_close(gp_tcp_connection *);
+extern void    conn_shutdown(gp_tcp_connection *);
+extern void    conn_send(gp_tcp_connection *, char *, int);
+extern void    conn_send_in_loop(gp_tcp_connection *, char *, int);
+extern void    connection_established(gp_tcp_connection *);
+extern void    connection_destroyed(gp_tcp_connection *);
+
+/*-----------------------------------------------------------------------------------------------*/
+extern void	   create_gp_buffer(gp_buffer **);
+extern void	   init_gp_buffer(gp_buffer *);
+extern size_t  readable_bytes(gp_buffer *);
+extern size_t  writable_bytes(gp_buffer *);
+extern size_t  prepenable_bytes(gp_buffer *);
+extern char*   peek(gp_buffer *);
+extern void	   retrieve(gp_buffer *, size_t);
+extern void	   retrieve_all(gp_buffer *);
+extern char*   retrieve_as_string(gp_buffer *, size_t);
+extern char*   retrieve_all_as_string(gp_buffer *);
+extern void	   buffer_append(gp_buffer *, char *, size_t);
+extern size_t  buffer_read_fd(gp_buffer *, int32_t, int *);
 
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void gp_list_init_offset(gp_list *list, size_t offset);
+extern void  gp_list_init_offset(gp_list *list, size_t offset);
 extern void *gp_list_first(const gp_list *); 
 extern void *gp_list_last(const gp_list *); 
 extern void  gp_list_append(gp_list *, void *); 

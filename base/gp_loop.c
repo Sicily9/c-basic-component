@@ -1,6 +1,9 @@
 #include "gp.h"
 #include <errno.h>
 #include <sys/epoll.h>
+#include <sys/eventfd.h>
+#include <sys/syscall.h>
+#include <stdarg.h>
 /*-----------------------------timer------------------------------------*/ 
 void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int32_t interval, int32_t repeat)
 {
@@ -32,107 +35,7 @@ void gp_loop_update_time(gp_loop *loop)
 
 /*--------------------------------------gp_io---------------------------------------*/
 
-static unsigned int next_power_of_two(uint32_t val)
-{
-	val -= 1;
-	val |= val >> 1;
-	val |= val >> 2;
-	val |= val >> 4;
-	val |= val >> 8;
-	val |= val >> 16;
-	val += 1;
-	return val;
-}
-
-static void maybe_resize(gp_loop *loop, uint32_t len) 
-{
- 	gp_io** watchers;
-  	void* fake_watcher_list;
-  	void* fake_watcher_count;
-    uint32_t nwatchers;
-  	uint32_t i;
-
-  	if (len <= loop->nwatchers)
-    		return;
-
-  /* Preserve fake watcher list and count at the end of the watchers */
-  	if (loop->watchers != NULL) {
-    		fake_watcher_list = loop->watchers[loop->nwatchers];
-    		fake_watcher_count = loop->watchers[loop->nwatchers + 1];
-  	} else {
-    		fake_watcher_list = NULL;
-    		fake_watcher_count = NULL;
-  	}
-
-  	nwatchers = next_power_of_two(len + 2) - 2; 
-  	watchers = realloc(loop->watchers,
-           (nwatchers + 2) * sizeof(loop->watchers[0]));
-
-	if(watchers == NULL)
-		return;
-
-  	for (i = loop->nwatchers; i < nwatchers; i++) 
-    		watchers[i] = NULL;
-  	
-	watchers[nwatchers] = fake_watcher_list;
-  	watchers[nwatchers + 1] = fake_watcher_count;
-
-  	loop->watchers = watchers;
-  	loop->nwatchers = nwatchers;
-
-}
-
-void create_gp_io(gp_io **w, gp_io_cb cb, int32_t fd)
-{
-	gp_io *w_t = malloc(sizeof(gp_io));
-	memset(w_t, 0, sizeof(gp_io));
-	init_gp_io(w_t, cb, fd);
-	*w = w_t;
-}
-
-void init_gp_io(gp_io *w, gp_io_cb cb, int32_t fd)
-{
-	GP_LIST_NODE_INIT(&w->pending_node);
-	GP_LIST_NODE_INIT(&w->watcher_node);
-	w->cb = cb;
-	w->fd = fd;
-	w->events = 0;
-	w->pevents = 0;
-}
-
-void gp_io_start(gp_loop *loop, gp_io *w, uint32_t events)
-{
-	w->pevents |= events;
-	maybe_resize(loop, w->fd + 1);
-
-	if(!gp_list_node_active(&w->watcher_node)){
-		gp_list_append(&loop->watcher_list, w);
-	}
-
-	if(loop->watchers[w->fd] == NULL) {
-		loop->watchers[w->fd] = w;
-		loop->nfds++;
-	}
-}
-
-void gp_io_stop(gp_loop *loop, gp_io *w, uint32_t events)
-{
-	if((uint32_t) w->fd >= loop->nwatchers)
-		return;
-
-	w->pevents &= ~events;
-
-	if(w->pevents == 0){
-		gp_list_node_remove(&w->watcher_node);
-		if(loop->watchers[w->fd] != NULL){
-			loop->watchers[w->fd] = NULL;
-			loop->nfds--;
-			w->events = 0;
-		}
-	}else if(gp_list_node_active(&w->watcher_node))
-		gp_list_append(&loop->watcher_list, w);
-}
-
+#if 0
 void gp_io_poll(gp_loop *loop, uint32_t timeout)
 {
 	static const int32_t max_safe_timeout = MAX_TVAL;
@@ -272,10 +175,45 @@ update_timeout:
     timeout = real_timeout;
   }
 }
-
+#endif
 
 /*-------------------------------------gp_loop-------------------------------------*/
-int create_gp_loop(gp_loop **loop)
+
+static int32_t create_eventfd(void){
+	int evtfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	if (evtfd < 0)
+	{
+		abort();
+	}
+	return evtfd;
+}
+
+static void handler_wakeup_read(gp_handler *handler)
+{
+	uint64_t one = 1;
+	ssize_t n = read(handler->fd, &one, sizeof one);
+	if (n != sizeof one)
+	{
+
+	}
+}
+
+static void wakeup(int32_t fd)
+{
+	uint64_t one = 1;
+	ssize_t n = write(fd, &one, sizeof one);
+	if (n != sizeof one)
+	{
+
+	}
+}
+
+void wakeup_handler_read_callback(gp_handler *handler)
+{
+	handler_wakeup_read(handler);
+}
+
+int32_t create_gp_loop(gp_loop **loop)
 {
 	gp_loop *loop_t = malloc(sizeof(gp_loop));
 	memset(loop_t, 0, sizeof(*loop_t));
@@ -284,33 +222,157 @@ int create_gp_loop(gp_loop **loop)
 	return 0;
 }
 
+int8_t is_in_loop_thread(gp_loop *loop)
+{
+	return loop->tid == (int64_t)syscall(SYS_gettid);
+}
+
+void gp_queue_in_loop(gp_loop *loop, gp_pending_task *task)
+{
+	//TODO:多线程 per loop per thread时 得上锁
+	gp_list_append(&loop->pending_list, task);
+
+	if(!is_in_loop_thread(loop) || loop->calling_pending_functors)
+	{
+		wakeup(loop->wakeup_fd);
+	}
+}
+
+void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
+{
+	if(is_in_loop_thread(loop)){
+    	switch(task->type)
+    	{
+        	case GP_RUN_IN_LOOP_TRANS:
+        	{
+            	task->pending_func(NULL, task->conn, task->msg, task->len);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_CONN:
+        	{
+            	task->pending_func(NULL, task->conn, NULL, 0);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_REMOVE_CONN:
+        	{
+            	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_SERVER_START:
+        	{
+            	task->pending_func(task->tcp_server, NULL, NULL, 0);
+            	break;
+        	}
+        	default:
+        	{
+				break;
+        	}
+    	}
+	}else{
+		gp_queue_in_loop(loop, task);
+	}
+}
+
+static void do_pending_functors(gp_loop *loop)
+{
+	loop->calling_pending_functors = 1;
+	gp_pending_task *task = NULL;
+	GP_LIST_FOREACH(&loop->pending_list, task)
+	{
+    	switch(task->type)
+    	{
+        	case GP_RUN_IN_LOOP_TRANS:
+        	{
+            	task->pending_func(NULL, task->conn, task->msg, task->len);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_CONN:
+        	{
+            	task->pending_func(NULL, task->conn, NULL, 0);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_REMOVE_CONN:
+        	{
+            	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+            	break;
+        	}
+        	case GP_RUN_IN_LOOP_SERVER_START:
+        	{
+            	task->pending_func(task->tcp_server, NULL, NULL, 0);
+            	break;
+        	}
+        	default:
+        	{
+				break;
+        	}
+    	}
+	}
+	loop->calling_pending_functors = 0;
+}
+
+void gp_loop_update_handler(gp_loop *loop, gp_handler *handler)
+{
+	update_handler(loop->epoller, handler);
+}
+
+void gp_loop_remove_handler(gp_loop *loop, gp_handler *handler)
+{
+	remove_handler(loop->epoller, handler);
+}
+
+void gp_loop_quit(gp_loop *loop)
+{
+	loop->quit = 1;
+	if(!is_in_loop_thread(loop))
+	{
+		wakeup(loop->wakeup_fd);
+	}
+}
+
 int32_t init_gp_loop(gp_loop *loop)
 {
 	gp_loop_update_time(loop);
 	loop->timer_base = NULL;
-	create_gp_timer_base(&loop->timer_base, loop->time);
-	loop->watchers = NULL;
-	loop->nfds = 0;
-	loop->nwatchers = 0;
-	loop->stop_flags = 0;
-	loop->backend_fd = epoll_create1(EPOLL_CLOEXEC);
 
-	GP_LIST_INIT(&loop->watcher_list, gp_io, watcher_node);
-	GP_LIST_INIT(&loop->pending_list, gp_io, pending_node);
+	loop->quit = 0;
+	loop->tid = syscall(SYS_gettid);
+	loop->looping = 0;
+	loop->calling_pending_functors = 0;
+
+	create_gp_timer_base(&loop->timer_base, loop->time);
+	create_gp_epoller(&loop->epoller);
+	loop->wakeup_fd = create_eventfd();
+	create_gp_handler(&loop->wakeup_handler, loop, loop->wakeup_fd);
+	set_read_callback(loop->wakeup_handler, wakeup_handler_read_callback);
+	enable_reading(loop->wakeup_handler);
+
+	GP_LIST_INIT(&loop->active_handler_list, gp_handler, handler_node);
+	GP_LIST_INIT(&loop->pending_list, gp_pending_task, pending_task_node);
 	return 0;
 }
 
 int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 {
 	uint32_t timeout;
-	while(loop->stop_flags == 0){
+	gp_handler *tmp;
+
+	loop->looping = 1;
+	loop->quit 	  = 0;
+	while(loop->quit == 0){
+		printf("timer_base:%u time:%u\n", loop->timer_base->next_timer, loop->time);
 		gp_loop_run_timers(loop);
 		timeout = 0;
 
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
 			timeout = loop->timer_base->next_timer - loop->time;
-		
-		gp_io_poll(loop, timeout);
+
+	//	poller_poll(loop->epoller, timeout, &loop->active_handler_list);
+		gp_loop_update_time(loop);
+
+	//	GP_LIST_FOREACH(&loop->active_handler_list, tmp){
+	//		handle_event(tmp);
+	//	}
+		do_pending_functors(loop);
 		
 		if(mode == GP_RUN_ONCE) {
 			gp_loop_update_time(loop);
@@ -319,8 +381,6 @@ int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 		if(mode == GP_RUN_ONCE || mode == GP_RUN_NOWAIT)
 			break;
 	}
-
-	if(loop->stop_flags != 0)
-		loop->stop_flags = 0;
+	loop->looping = 0;
 	return 0;
 }
