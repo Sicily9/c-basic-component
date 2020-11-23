@@ -11,8 +11,7 @@ void gp_loop_timer_start(gp_loop *loop, void (*fn)(void *), void *data, int32_t 
 	create_gp_timer(&timer, fn, data, loop->time + interval, interval, repeat);
 	timer->loop = loop;
 	gp_timer_add(loop->timer_base, timer);
-}
-
+} 
 void gp_loop_timer_stop(gp_timer_list *timer)
 {
 	gp_timer_del(timer);
@@ -250,6 +249,7 @@ void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
         	}
         	case GP_RUN_IN_LOOP_CONN:
         	{
+				printf("run in loop conn_pending_task, fd:%d\n", task->conn->fd);
             	task->pending_func(NULL, task->conn, NULL, 0);
             	break;
         	}
@@ -268,6 +268,7 @@ void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
 				break;
         	}
     	}
+		destruct_gp_pending_task(task);
 	}else{
 		gp_queue_in_loop(loop, task);
 	}
@@ -277,27 +278,32 @@ static void do_pending_functors(gp_loop *loop)
 {
 	loop->calling_pending_functors = 1;
 	gp_pending_task *task = NULL;
-	GP_LIST_FOREACH(&loop->pending_list, task)
+	gp_pending_task *tmp = NULL;
+	GP_LIST_FOREACH_SAFE(&loop->pending_list, tmp, task)
 	{
     	switch(task->type)
     	{
         	case GP_RUN_IN_LOOP_TRANS:
         	{
+				printf("trans_pending_task, msg: %s\n", task->msg);
             	task->pending_func(NULL, task->conn, task->msg, task->len);
             	break;
         	}
         	case GP_RUN_IN_LOOP_CONN:
         	{
+				printf("conn_pending_task, fd:%d\n", task->conn->fd);
             	task->pending_func(NULL, task->conn, NULL, 0);
             	break;
         	}
         	case GP_RUN_IN_LOOP_REMOVE_CONN:
         	{
+				printf("remove conn pending_task, fd:%d\n", task->conn->fd);
             	task->pending_func(task->tcp_server, task->conn, NULL, 0);
             	break;
         	}
         	case GP_RUN_IN_LOOP_SERVER_START:
         	{
+				printf("conn_server_start\n");
             	task->pending_func(task->tcp_server, NULL, NULL, 0);
             	break;
         	}
@@ -306,6 +312,7 @@ static void do_pending_functors(gp_loop *loop)
 				break;
         	}
     	}
+		destruct_gp_pending_task(task);
 	}
 	loop->calling_pending_functors = 0;
 }
@@ -342,6 +349,7 @@ int32_t init_gp_loop(gp_loop *loop)
 	create_gp_timer_base(&loop->timer_base, loop->time);
 	create_gp_epoller(&loop->epoller);
 	loop->wakeup_fd = create_eventfd();
+	printf("wakeup fd: %d\n", loop->wakeup_fd);
 	create_gp_handler(&loop->wakeup_handler, loop, loop->wakeup_fd);
 	set_read_callback(loop->wakeup_handler, wakeup_handler_read_callback);
 	enable_reading(loop->wakeup_handler);
@@ -359,7 +367,6 @@ int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	loop->looping = 1;
 	loop->quit 	  = 0;
 	while(loop->quit == 0){
-		printf("timer_base:%u time:%u\n", loop->timer_base->next_timer, loop->time);
 		gp_loop_run_timers(loop);
 		timeout = 0;
 

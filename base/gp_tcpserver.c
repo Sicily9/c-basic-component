@@ -62,6 +62,7 @@ void new_connection_callback(int32_t sockfd, gp_inet_address *peeraddr)
 	conn_set_close_callback(conn, remove_conn);
 
 	gp_pending_task *task = NULL;
+	printf("create conn pending_task\n");
 	create_gp_pending_task(&task, GP_RUN_IN_LOOP_CONN, run_in_loop_create_conn, NULL, conn, NULL, 0);
 	gp_run_in_loop(loop, task);
 }

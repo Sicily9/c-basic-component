@@ -8,12 +8,13 @@ static void acceptor_read_callback(gp_handler *handler)
     bzero(&addr, sizeof addr);
 	socklen_t addrlen = (socklen_t)(sizeof addr);
     int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
+	printf("new connection:%d\n", connfd);
 
 	gp_inet_address peeraddr;
 	peeraddr.addr = addr;
 
 	if(connfd > 0){
-		acceptor->new_connection_callback(handler->fd, &peeraddr);
+		acceptor->new_connection_callback(connfd, &peeraddr);
 	}else{
 		close(handler->fd);	
 	}
@@ -30,6 +31,7 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_inet_address *ine
 	acceptor->loop = loop;
 	acceptor->listenning = 0;
 	acceptor->fd = socket(inet_address->addr.sin_family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP); 
+	printf("listen fd:%d\n", acceptor->fd);
 	create_gp_handler(&acceptor->accept_handler, loop, acceptor->fd);
 
 	int32_t optval = 1;

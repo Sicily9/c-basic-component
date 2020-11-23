@@ -5,7 +5,8 @@ void init_gp_pending_task(gp_pending_task *task, int8_t type, gp_pending_func fu
 	task->type = type;
 	task->tcp_server = server;
 	task->conn = conn;
-	task->msg = msg;
+	task->msg = malloc(len);
+	memcpy(task->msg, msg ,len);
 	task->len = len;
 
 	task->pending_func = func;
@@ -19,5 +20,14 @@ void create_gp_pending_task(gp_pending_task **task, int8_t type, gp_pending_func
 	memset(tmp, 0, sizeof(*tmp));
 	init_gp_pending_task(tmp, type, func, server, conn, msg, len);
 	*task = tmp;
+}
+
+void destruct_gp_pending_task(gp_pending_task *task)
+{
+	gp_list_node_remove(&task->pending_task_node);
+	if(task->msg){
+		free(task->msg);
+	}
+	free(task);
 }
 

@@ -48,7 +48,9 @@ void connection_handler_read(gp_handler *handler)
 	gp_tcp_connection *conn = dictFetchValue(server->connections, &handler->fd);
 	
 	int saved_errno = 0;
+	printf("buffer len:%ld\n", readable_bytes(conn->input_buffer));
 	size_t n = buffer_read_fd(conn->input_buffer, handler->fd, &saved_errno);
+	printf("after receive %ld bytes, buffer len:%ld\n", n, readable_bytes(conn->input_buffer));
 	if(n > 0)
 	{
 		conn->message_callback(conn, conn->input_buffer);
@@ -186,6 +188,7 @@ void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, 
 	conn->loop = loop;
 	conn->local_addr.addr = localaddr->addr;
 	conn->peer_addr.addr = peeraddr->addr;
+	conn->fd = fd;
 	conn->state = k_connecting;
 	conn->message_callback = NULL;
 	conn->connection_callback = NULL;
@@ -193,7 +196,7 @@ void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, 
 
 	create_gp_handler(&conn->handler, loop, fd);
 	create_gp_buffer(&conn->input_buffer);
-	create_gp_buffer(&conn->input_buffer);
+	create_gp_buffer(&conn->output_buffer);
 
 	set_read_callback(conn->handler, connection_handler_read);
 	set_write_callback(conn->handler, connection_handler_write);

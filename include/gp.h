@@ -517,6 +517,7 @@ extern void    init_gp_inet_address(gp_inet_address *, char *, uint16_t, uint8_t
 /*-----------------------------------------------------------------------------------------------*/
 extern void    create_gp_pending_task(gp_pending_task **, int8_t, gp_pending_func, gp_tcp_server *, gp_tcp_connection *, char *, int );
 extern void    init_gp_pending_task(gp_pending_task *, int8_t, gp_pending_func, gp_tcp_server *, gp_tcp_connection *, char *, int );
+extern void    destruct_gp_pending_task(gp_pending_task *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   create_gp_tcp_server(gp_tcp_server **, gp_loop *, gp_inet_address *, char *);

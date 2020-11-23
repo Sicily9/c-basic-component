@@ -2,7 +2,8 @@
 #include <poll.h>
 
 
-int knone_event = 0; int kread_event = POLLIN | POLLPRI;
+int knone_event = 0;
+int kread_event = POLLIN | POLLPRI;
 int kwrite_event = POLLOUT;
 
 static void update(gp_handler *handler){
