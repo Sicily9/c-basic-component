@@ -366,6 +366,10 @@ int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
 			timeout = loop->timer_base->next_timer - loop->time;
 
+		GP_LIST_FOREACH(&loop->active_handler_list, tmp){
+			gp_list_node_remove(&tmp->handler_node);
+		}
+
 		poller_poll(loop->epoller, timeout, &loop->active_handler_list);
 		gp_loop_update_time(loop);
 
