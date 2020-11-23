@@ -3,7 +3,10 @@ if(test)
 	set(list_src "list/test_list.cpp" "list/sds.h" "list/sds.c" "test.h")
 	set(dict_src "dict/test_dict.cpp" "dict/sds.h" "dict/sds.c" "test.h")
 	set(loop_src "loop/test_loop.c") 
-	set(server_src "server/test_server.c") 
+	set(server_src "server/test_server.c" "server/test.pb-c.h"
+			"server/test.pb-c.c") 
+	set(client_src "server/test_client.c" "server/test.pb-c.h"
+			"server/test.pb-c.c") 
 	set(module_src "module/test_module.cpp")
 	set(thread_src "thread/test_thread.c") 
 	set(threadpool_src "threadpool/test_threadpool.c" "threadpool/task.pb-c.h"
@@ -22,11 +25,12 @@ if(test)
 	build_target(T "gp_module" SRC ${module_src} LIBS ${lib_dep})
 	#gtest_discover_tests(gp_module)
 	build_target(T "gp_thread" SRC ${thread_src} LIBS ${lib_dep})
-	build_target(T "gp_threadpool" SRC ${threadpool_src} LIBS ${lib2_dep})
+	#build_target(T "gp_threadpool" SRC ${threadpool_src} LIBS ${lib2_dep})
 	#build_target(T "gp_loop" SRC ${loop_src} LIBS ${lib_dep})
-	build_target(T "gp_server" SRC ${server_src} LIBS ${lib_dep})
+	build_target(T "gp_server" SRC ${server_src} LIBS ${lib2_dep})
+	build_target(T "gp_client" SRC ${client_src} LIBS ${lib2_dep})
 
-	add_custom_command(TARGET gp_threadpool
+	add_custom_command(TARGET gp_thread
 			           POST_BUILD
 				       COMMAND make test
 	)
