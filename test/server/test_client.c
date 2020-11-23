@@ -9,10 +9,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "gp.h"
+#include "test.pb-c.h"
+
 int main(int argc,char *argv[])
 {
-    int sockfd,numbytes;
-    char buf[BUFSIZ];
+    int sockfd;
     struct sockaddr_in their_addr;
     sockfd = socket(AF_INET,SOCK_STREAM,0);
     their_addr.sin_family = AF_INET;
@@ -23,18 +25,31 @@ int main(int argc,char *argv[])
 
     printf("Get the Server~Cheers!\n");
     while(1){
-		char *msg = "hello";
-		char buf[20] = {0};
 		size_t n = 0;
 		
-		n = send(sockfd,msg,strlen(msg),0); 
+		Name a;
+		name__init(&a);
+		a.name = malloc(10);
+		strcpy(a.name, "i am a");
+
+		a.id = 1;
+		a.age = 3;
+
+		uint8_t *msg = NULL;
+		int32_t size = encode((ProtobufCMessage *)&a, &msg);
+		printf("msg: %s\n", msg);
+
+		n = send(sockfd, msg, size,0); 
 		if(n < 0) {
 			perror("send");
  			exit(1);
  		}else{
 			printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
+			free(msg);
 		}
 
+#if 0
+		char buf[20] = {0};
 		n = recv(sockfd, buf, sizeof buf, 0); 
 		if(n < 0) {
 			perror("receive");
@@ -43,7 +58,7 @@ int main(int argc,char *argv[])
 			printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
 			memset(buf, 0, sizeof buf);
 		}
-
+#endif
 		sleep(1);
 	}
 	return 0;
