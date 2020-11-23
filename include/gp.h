@@ -1,6 +1,7 @@
 #ifndef __GP_H__
 #define __GP_H__
 
+#define _GNU_SOURCE 1
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +12,9 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <sys/queue.h>
-#define __USE_GNU
 #include <sys/socket.h>
 #include <unistd.h>
+#include <poll.h>
 #include <netinet/in.h>
 
 #ifndef likely
@@ -480,7 +481,7 @@ extern void    gp_loop_update_handler(gp_loop*, gp_handler *);
 /*-----------------------------------------------------------------------------------------------*/
 extern void    create_gp_epoller(gp_epoller **);
 extern void    init_gp_epoller(gp_epoller *);
-extern void    poller_poll(gp_epoller *, int32_t, event_list *);
+extern void    poller_poll(gp_epoller *, int32_t, gp_list *);
 extern void    remove_handler(gp_epoller *, gp_handler *);
 extern void    update_handler(gp_epoller *, gp_handler *);
 

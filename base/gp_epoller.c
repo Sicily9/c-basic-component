@@ -37,7 +37,7 @@ static void poller_update(gp_epoller* epoller, int operation, gp_handler *handle
 
 }
 
-static void fill_active_handlers(gp_epoller *epoller, int32_t num_events, event_list *active_handlers)
+static void fill_active_handlers(gp_epoller *epoller, int32_t num_events, gp_list *active_handlers)
 {
 	for (int i = 0; i < num_events; ++i){
 		gp_handler *handler = (gp_handler *)(epoller->events[i].data.ptr);
@@ -47,7 +47,7 @@ static void fill_active_handlers(gp_epoller *epoller, int32_t num_events, event_
 		set_revents(handler, epoller->events[i].events);
 
 		//add to _active_handlers 
-	//	gp_list_append(active_handlers, handler);
+		gp_list_append(active_handlers, handler);
 	}
 
 }
@@ -75,7 +75,7 @@ void update_handler(gp_epoller *epoller, gp_handler *handler)
 	}
 }
 
-void poller_poll(gp_epoller *epoller, int32_t timeout_ms, event_list* active_handlers)
+void poller_poll(gp_epoller *epoller, int32_t timeout_ms, gp_list* active_handlers)
 {
 	int32_t num_events = epoll_wait(epoller->epollfd, epoller->events, epoller->events_len, timeout_ms);
 
