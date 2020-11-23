@@ -146,6 +146,42 @@ void gp_conf_node_free(gp_conf_node *node)
     free(node);
 }
 
+int gp_conf_get_siblings_num(gp_conf_node * node)
+{
+    int i = 0;
+	gp_conf_node *child;
+    TAILQ_FOREACH(child, &node->head, next) { 			
+        i++;
+    }   
+	return i;
+}
+
+gp_conf_node *gp_conf_get_node_in_array(const char *head_name, int i, const char *name)
+{
+    gp_conf_node *node = root;
+    char tmp_name[NODE_NAME_MAX];
+    char node_name[NODE_NAME_MAX];
+    char *key;
+    char *next;
+
+	snprintf(tmp_name, NODE_NAME_MAX, "%s.%d.%s", head_name, i, name);
+
+    if (strlcpy(node_name, tmp_name, sizeof(node_name)) >= sizeof(node_name)) {
+        return NULL;
+    }
+
+    key = node_name;
+
+    do {
+        if ((next = strchr(key, '.')) != NULL)
+            *next++ = '\0';
+        node = gp_conf_node_lookup_child(node, key);
+        key = next;
+    } while (next != NULL && node != NULL);
+
+    return node;
+}
+
 /**
  * \brief Get a gp_conf_node by name.
  *
@@ -327,14 +363,16 @@ int gp_conf_get_child_value_with_default(const gp_conf_node *base, const gp_conf
     return ret;
 }
 
-int gp_conf_get_int(const char *name, intmax_t *val)
+int gp_conf_get_int(const char *name, int *val)
 {
     const char *strval = NULL;
     intmax_t tmpint;
     char *endptr;
 
-    if (gp_conf_get(name, &strval) == 0)
+    if (gp_conf_get(name, &strval) == 0){	
+		printf("name:%s\n",name);
         return 0;
+	}
 
     if (strval == NULL) {
         return 0;
@@ -342,6 +380,7 @@ int gp_conf_get_int(const char *name, intmax_t *val)
 
     errno = 0;
     tmpint = strtoimax(strval, &endptr, 0);
+	printf("%s",strval);
     if (strval[0] == '\0' || *endptr != '\0') {
         return 0;
     }
