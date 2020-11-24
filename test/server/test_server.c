@@ -4,20 +4,19 @@
 
 void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 {
-	size_t buffer_len = readable_bytes(buffer);
-	while (buffer_len >= 4)
+	while (readable_bytes(buffer) >= 4)
     {
       void* data = peek(buffer);  
       int32_t be32 = *(const int32_t*)(data);
 
       const int32_t len = ntohl(be32);  //转换成主机字节序
-      retrieve(buffer, 4);  
       if (len > 65536 || len < 0)  //如果消息超过64K，或者长度小于0，不合法，干掉它。
       {
         break;
       }
-      else if (buffer_len >= len + 4)  
+      else if ((readable_bytes(buffer)) >= len + 4)  
       {                                                
+        retrieve(buffer, 4);  
 		data = peek(buffer);
       	be32 = *(const int32_t*)(data); 
 		const int32_t name_len = ntohl(be32);
@@ -35,8 +34,7 @@ void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 
 		Name * t = (Name *)msg;
 		printf("name: %s\n", t->name);
-		buffer_len = readable_bytes(buffer);
-		free(msg);
+		protobuf_c_message_free_unpacked(msg, NULL);
       }
       else   //未达到一条完整的消息
       {
@@ -56,13 +54,13 @@ void timer_func4(void *data)
 
 
 int main()
-{
+{	
 	printf("EPOLL_CTL_ADD:1 EPOLL_CTL_MOD:3 EPOLL_CTL_DEL:2\n");
 	gp_loop *loop = NULL;
 	create_gp_loop(&loop);
 
 	gp_inet_address *address = NULL;
-	create_gp_inet_address(&address, "127.0.0.1", 8000, 0);
+	create_gp_inet_address(&address, "0.0.0.0", 8000, 0);
 
 	gp_tcp_server *server = get_tcp_server();
 	init_gp_tcp_server(server, loop, address, "guish");

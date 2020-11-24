@@ -27,6 +27,7 @@ int main(int argc,char *argv[])
     while(1){
 		size_t n = 0;
 		
+#if 1
 		Name a;
 		name__init(&a);
 		a.name = malloc(10);
@@ -47,6 +48,7 @@ int main(int argc,char *argv[])
 			printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
 			free(msg);
 		}
+#endif
 
 #if 0
 		char buf[20] = {0};

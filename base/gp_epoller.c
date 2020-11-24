@@ -45,6 +45,7 @@ static void fill_active_handlers(gp_epoller *epoller, int32_t num_events, gp_lis
 		//int32_t fd = handler->fd;
 
 		set_revents(handler, epoller->events[i].events);
+		printf("fd:%d act", handler->fd);
 
 		//add to _active_handlers 
 		gp_list_append(active_handlers, handler);
@@ -88,6 +89,7 @@ void poller_poll(gp_epoller *epoller, int32_t timeout_ms, gp_list* active_handle
 	}else{
 		if (saved_errno != EINTR){
 			char *msg = strerror(saved_errno);
+			printf("%s\n", msg);
 		}
 	}
 }

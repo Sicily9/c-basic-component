@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <poll.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <endian.h>
+#include <netdb.h>
 #include <protobuf-c/protobuf-c.h>
 
 #ifndef likely
@@ -561,6 +564,12 @@ extern size_t  buffer_read_fd(gp_buffer *, int32_t, int *);
 extern void	   register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
 extern size_t encode(ProtobufCMessage *, uint8_t **);
 extern ProtobufCMessage* decode(char *, size_t, void *);
+
+/*-----------------------------------------------------------------------------------------------*/
+void get_local_address(int32_t, char a[], int *, int);
+void get_peer_address(int32_t, char a[], int *, int);
+
+
 /*-----------------------------------------------------------------------------------------------*/
 extern void  gp_list_init_offset(gp_list *, size_t);
 extern void *gp_list_first(const gp_list *); 

@@ -57,7 +57,6 @@ int gp_ring_push(gp_ring *q, int n, void **obj)
 
 	}while(!ok);
 
-
 	unsigned int i;
 	unsigned int idx = head & q->mask;
 	void **ring = (void **)q->msgs;

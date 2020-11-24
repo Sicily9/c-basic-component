@@ -55,6 +55,12 @@ void acceptor_listen(gp_acceptor *acceptor)
 {
 	acceptor->listenning = 1;
 	int32_t ret = listen(acceptor->fd, SOMAXCONN);
+
+	char serv_ip[20];
+	int port;
+	get_local_address(acceptor->fd, serv_ip, &port, 20);
+	printf("serv_ip:%s:%d\n", serv_ip, port);
+
 	if(ret < 0){
 		exit(-1);
 	}

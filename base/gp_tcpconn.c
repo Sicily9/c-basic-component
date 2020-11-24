@@ -114,7 +114,7 @@ void conn_send_in_loop(gp_tcp_connection *conn, char *msg, int len)
 
     if (!faultError && remaining > 0)
     {
-        size_t oldLen = readable_bytes(conn->output_buffer);
+        //size_t oldLen = readable_bytes(conn->output_buffer);
 		//TODO high water mark
         buffer_append(conn->output_buffer, msg + nwrote, remaining);
         if (is_writing(conn->handler))

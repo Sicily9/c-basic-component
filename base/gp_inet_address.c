@@ -1,9 +1,5 @@
 #include "gp.h"
 #include <strings.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <endian.h>
 
 
 void init_gp_inet_address(gp_inet_address *inet_address, char *ip, uint16_t port, uint8_t ipv6)
