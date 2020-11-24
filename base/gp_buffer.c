@@ -21,6 +21,12 @@ void create_gp_buffer(gp_buffer **buffer)
 	*buffer = tmp;
 }
 
+void destruct_gp_buffer(gp_buffer *buffer)
+{
+	free(buffer->buffer);
+	free(buffer);
+}
+
 size_t readable_bytes(gp_buffer *buffer)
 {
 	return buffer->writer_index - buffer->reader_index;

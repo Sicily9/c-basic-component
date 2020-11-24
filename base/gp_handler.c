@@ -11,6 +11,13 @@ static void update(gp_handler *handler){
 	gp_loop_update_handler(handler->loop, handler);
 }
 
+void destruct_gp_handler(gp_handler *tmp)
+{
+	handler_remove(tmp);
+	close(tmp->fd);
+	free(tmp);
+}
+
 void init_gp_handler(gp_handler *tmp, gp_loop *loop, int fd)
 {
 	tmp->loop = loop;
@@ -92,8 +99,10 @@ void handle_event(gp_handler *handler){
 	handler->event_handling = 1;
 
 	if (unlikely((handler->_revents & POLLHUP) && !(handler->_revents & POLLIN))){
-		if(handler->_close_callback)
+		if(handler->_close_callback){
+			printf("handle_event: %d \n", handler->fd); //对方shutdown WR时
 			handler->_close_callback(handler);
+		}
 	}
 
 	if (unlikely(handler->_revents & (POLLERR | POLLNVAL))){

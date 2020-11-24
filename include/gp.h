@@ -492,6 +492,7 @@ extern void    update_handler(gp_epoller *, gp_handler *);
 /*-----------------------------------------------------------------------------------------------*/
 extern void    create_gp_handler(gp_handler **, gp_loop *, int fd);
 extern void    init_gp_handler(gp_handler *, gp_loop *, int fd);
+extern void    destruct_gp_handler(gp_handler *);
 extern void    set_read_callback(gp_handler *, gp_event_callback);
 extern void    set_write_callback(gp_handler *, gp_event_callback);
 extern void    set_close_callback(gp_handler *, gp_event_callback);
@@ -535,6 +536,7 @@ extern gp_tcp_server *   get_tcp_server(void);
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   create_gp_tcp_connection(gp_tcp_connection **, gp_loop *, int32_t, gp_inet_address *, gp_inet_address *);
 extern void	   init_gp_tcp_connection(gp_tcp_connection *, gp_loop *, int32_t, gp_inet_address *, gp_inet_address *);
+extern void	   destruct_gp_tcp_connection(gp_tcp_connection *);
 extern void    conn_set_write_complete_callback(gp_tcp_connection *, gp_write_complete_callback);
 extern void    conn_set_message_callback(gp_tcp_connection *, gp_message_callback);
 extern void    conn_set_connection_callback(gp_tcp_connection *, gp_connection_callback);
@@ -549,6 +551,7 @@ extern void    connection_destroyed(gp_tcp_connection *);
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   create_gp_buffer(gp_buffer **);
 extern void	   init_gp_buffer(gp_buffer *);
+extern void    destruct_gp_buffer(gp_buffer *);
 extern size_t  readable_bytes(gp_buffer *);
 extern size_t  writable_bytes(gp_buffer *);
 extern size_t  prepenable_bytes(gp_buffer *);

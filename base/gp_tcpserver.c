@@ -28,6 +28,7 @@ void remove_conn(gp_tcp_connection *conn)
 {
 	gp_tcp_server *server = get_tcp_server();
 	dictDelete(server->connections, &conn->handler->fd);
+	printf("remove conn from connections fd:%d\n", conn->handler->fd);
 
 	gp_pending_task *task = NULL;
 	create_gp_pending_task(&task, GP_RUN_IN_LOOP_REMOVE_CONN, run_in_loop_remove_conn, server, conn, NULL, 0);

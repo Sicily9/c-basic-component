@@ -3,6 +3,7 @@
 int main()
 {	
 	printf("EPOLL_CTL_ADD:1 EPOLL_CTL_MOD:3 EPOLL_CTL_DEL:2\n");
+	printf("POLLHUP:16 POLLIN:1 POLLERR:8 POLLNVAL:32 POLLPRI:2 POLLRDHUP:8192 POLLOUT:4\n");
 	gp_loop *loop = NULL;
 	create_gp_loop(&loop);
 

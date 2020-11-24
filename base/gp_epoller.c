@@ -45,7 +45,7 @@ static void fill_active_handlers(gp_epoller *epoller, int32_t num_events, gp_lis
 		//int32_t fd = handler->fd;
 
 		set_revents(handler, epoller->events[i].events);
-		printf("fd:%d act", handler->fd);
+		printf("fd:%d add to active_handlers\n", handler->fd);
 
 		//add to _active_handlers 
 		gp_list_append(active_handlers, handler);
@@ -69,6 +69,7 @@ void update_handler(gp_epoller *epoller, gp_handler *handler)
 	}else{
 		if(is_none_event(handler)) {
 			poller_update(epoller, EPOLL_CTL_DEL, handler);
+			printf("epoll del handler:%d\n", handler->fd);
 			handler->index = k_deleted;
 		}else{
 			poller_update(epoller, EPOLL_CTL_MOD, handler);

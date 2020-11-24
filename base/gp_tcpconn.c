@@ -55,7 +55,7 @@ void connection_handler_read(gp_handler *handler)
 	{
 		conn->message_callback(conn, conn->input_buffer);
 	}else if (n == 0) {
-		connection_handler_close(handler);
+		connection_handler_close(handler); //对方直接close时
 	}else {
 		errno = saved_errno;
 		connection_handler_error(handler);
@@ -146,7 +146,7 @@ void conn_send(gp_tcp_connection *conn, char *data, int len)
 
 void run_in_loop_shutdown(gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
 {
-	if(is_writing(conn->handler))
+	if(!is_writing(conn->handler))
 	{
 		shutdown(conn->fd, SHUT_WR);
 	}
@@ -181,6 +181,13 @@ void conn_force_close(gp_tcp_connection *conn)
 		create_gp_pending_task(&task, GP_RUN_IN_LOOP_CONN, queue_in_loop_force_close, NULL, conn, NULL, 0);	
 		gp_queue_in_loop(conn->loop, task);
 	}
+}
+void destruct_gp_tcp_connection(gp_tcp_connection *conn)
+{
+	destruct_gp_handler(conn->handler);
+	destruct_gp_buffer(conn->input_buffer);
+	destruct_gp_buffer(conn->output_buffer);
+	free(conn);
 }
 
 void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, gp_inet_address *localaddr, gp_inet_address *peeraddr)
