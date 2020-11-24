@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "gp.h"
-#include "test.pb-c.h"
+#include "proto/test.pb-c.h"
 
 int main(int argc,char *argv[])
 {
