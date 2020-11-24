@@ -3,8 +3,9 @@ if(test)
 	set(list_src "list/test_list.cpp" "list/sds.h" "list/sds.c" "test.h")
 	set(dict_src "dict/test_dict.cpp" "dict/sds.h" "dict/sds.c" "test.h")
 	set(loop_src "loop/test_loop.c") 
-	set(server_src "server/test_server.c" "server/test.pb-c.h"
-			"server/test.pb-c.c") 
+	set(server_src "server/server_main.c" "server/test.pb-c.h"
+			"server/test.pb-c.c" "server/guish_server.h" "server/guish_server.c"
+			"server/name_handler.c") 
 	set(client_src "server/test_client.c" "server/test.pb-c.h"
 			"server/test.pb-c.c") 
 	set(module_src "module/test_module.cpp")

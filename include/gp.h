@@ -72,6 +72,7 @@ typedef void (*gp_write_complete_callback)(gp_tcp_connection *);
 typedef void (*gp_message_callback)(gp_tcp_connection *, gp_buffer*);
 typedef void (*gp_new_connection_callback)(int32_t, gp_inet_address *);
 typedef void (*gp_pending_func)(gp_tcp_server *, gp_tcp_connection *, char *, int);
+typedef uint32_t (*gp_protobuf_msg_callback)(gp_tcp_connection *, ProtobufCMessage *);
 
 enum gp_run_mode_s{
     GP_RUN_DEFAULT = 0,
@@ -208,7 +209,6 @@ struct gp_pending_task_s{
 	
 	gp_list_node		pending_task_node;
 };
-
 
 struct gp_tcp_server_s{
 	char					   name[15];
@@ -566,9 +566,11 @@ extern size_t encode(ProtobufCMessage *, uint8_t **);
 extern ProtobufCMessage* decode(char *, size_t, void *);
 
 /*-----------------------------------------------------------------------------------------------*/
-void get_local_address(int32_t, char a[], int *, int);
-void get_peer_address(int32_t, char a[], int *, int);
+extern void  get_local_address(int32_t, char a[], int *, int);
+extern void  get_peer_address(int32_t, char a[], int *, int);
 
+extern void  register_msg_callback(char *name, gp_protobuf_msg_callback);
+extern gp_protobuf_msg_callback  get_msg_callback(const char *name);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void  gp_list_init_offset(gp_list *, size_t);
@@ -833,7 +835,8 @@ extern uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint
 /*---------------------------------------------gp_module------------------------------------------------*/
 #define gp_module_init(module, arg1, arg2, func1, func2) \
 static void __attribute__((constructor)) do_gp_init_ ## module(void) {  \
-        module.type = arg1; \
+		gp_module_desc module;\
+		module.type = arg1; \
         strcpy(module.name, arg2); \
         module.init = func1; \
         module.early_init = func2; \

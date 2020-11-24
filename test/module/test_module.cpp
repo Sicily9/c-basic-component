@@ -21,7 +21,7 @@ void init_test(void) {
     init = timeInMicroseconds();
 }
 
-gp_module_desc test_module;
+//gp_module_desc test_module;
 
 char name[] ="test";
 gp_module_init(test_module, MODULE_INIT_FIRST, name, init_test, early_init_test) ;
