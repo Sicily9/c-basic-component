@@ -13,7 +13,6 @@ void connection_handler_close(gp_handler *handler)
 	conn->connection_callback(conn);
 	conn->close_callback(conn);
 	conn_ref_dec(&conn);
-	printf("conn: %ld\n", gp_atomic_get(&conn->ref));
 }
 
 void connection_handler_error(gp_handler *handler)

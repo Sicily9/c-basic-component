@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
@@ -14,6 +15,10 @@
 
 int main(int argc,char *argv[])
 {
+
+	struct timeval start, end;  // define 2 struct timeval variables
+ 
+
     int sockfd;
     struct sockaddr_in their_addr;
     sockfd = socket(AF_INET,SOCK_STREAM,0);
@@ -38,16 +43,17 @@ int main(int argc,char *argv[])
 
 		uint8_t *msg = NULL;
 		int32_t size = encode((ProtobufCMessage *)&a, &msg);
-		printf("msg: %s\n", msg);
 
+    	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 
 		if(n < 0) {
 			perror("send");
  			exit(1);
  		}else{
-			printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
+		//	printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
 			free(msg);
 		}
+
 #endif
 
 #if 1
@@ -57,9 +63,12 @@ int main(int argc,char *argv[])
 			perror("receive");
  			exit(1);
  		}else{
-			printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
+		//	printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
 			memset(buf, 0, sizeof buf);
 		}
+    	gettimeofday(&end, NULL); 
+		long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+		printf("pingpong: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
 #endif
 		sleep(1);
 	}

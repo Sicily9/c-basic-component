@@ -1,9 +1,12 @@
 #include "guish_server.h"
 #include "proto/test.pb-c.h"
 
-// 4 4 "Name" --
-
 gp_task_processor *task_processor = NULL;
+
+uint32_t protobuf_default_callback(gp_tcp_connection *conn, ProtobufCMessage *msg)
+{
+	printf("protobuf_msg name:%s unknown message type\n", msg->descriptor->name);
+}
 
 void handle_msg(void *msg)
 {
@@ -13,7 +16,10 @@ void handle_msg(void *msg)
 	conn_ref_inc(&conn);
 
 	gp_protobuf_msg_callback cb = get_msg_callback(pbmsg->descriptor->name);
-	cb(conn, pbmsg);
+	if(likely(cb != NULL))
+		cb(conn, pbmsg);
+	else
+		protobuf_default_callback(conn, pbmsg);
 
     protobuf_c_message_free_unpacked(pbmsg, NULL);
 	conn_ref_dec(&conn);
@@ -22,45 +28,43 @@ void handle_msg(void *msg)
 void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 {
     while (readable_bytes(buffer) >= 4)
-    {   
-      void* data = peek(buffer);  
-      int32_t be32 = *(const int32_t*)(data);
-      const int32_t len = ntohl(be32); 
-      if (len > 65536 || len < 0)  {   
-        break;
-      }   
-      else if ((readable_bytes(buffer)) >= len + 4)  
-      {                                                    
-        retrieve(buffer, 4);  
-        data = peek(buffer);
-        be32 = *(const int32_t*)(data); 
-        const int32_t name_len = ntohl(be32);
-        retrieve(buffer, 4);  
+	{   
+		void* data = peek(buffer);  
+      	int32_t be32 = *(const int32_t*)(data);
+      	const int32_t len = ntohl(be32); 
+      	if (len > 65536 || len < 0)  {   
+        	break;
+      	}   
+      	else if ((readable_bytes(buffer)) >= len + 4)  
+      	{                                                    
+        	retrieve(buffer, 4);  
+        	data = peek(buffer);
+        	be32 = *(const int32_t*)(data); 
+        	const int32_t name_len = ntohl(be32);
+        	retrieve(buffer, 4);  
             
-        data = peek(buffer);
-		char * name = calloc(1, name_len);
-        memcpy(name, data, name_len);
-        retrieve(buffer, name_len); 
+        	data = peek(buffer);
+			char * name = calloc(1, name_len);
+        	memcpy(name, data, name_len);
+        	retrieve(buffer, name_len); 
 
-        data = peek(buffer);
-        ProtobufCMessage *msg = decode(name, len - 4 - name_len, data);
-        free(name);
-        retrieve(buffer, len - 4 - name_len); 
+        	data = peek(buffer);
+        	ProtobufCMessage *msg = decode(name, len - 4 - name_len, data);
+        	free(name);
+        	retrieve(buffer, len - 4 - name_len); 
 
-		transport_msg *tmsg;
-		create_transport_msg(&tmsg, msg, conn);
+			transport_msg *tmsg;
+			create_transport_msg(&tmsg, msg, conn);
 
-		gp_task *task;
-		create_task(&task, get_task_processor(), handle_msg, tmsg);
-		run_task(task);
+			gp_task *task;
+			create_task(&task, get_task_processor(), handle_msg, tmsg);
+			run_task(task);
 
-		destroy_task(task);
-      }
-      else   
-      {
-        break;  
-      }
-    }
+			destroy_task(task);
+      	} else {
+        	break;  
+      	}
+	}
 }
 
 void on_connection(gp_tcp_connection *conn)
