@@ -28,6 +28,7 @@ void remove_conn(gp_tcp_connection *conn)
 {
 	gp_tcp_server *server = get_tcp_server();
 	dictDelete(server->connections, &conn->handler->fd);
+	conn_ref_dec(&conn);
 	printf("remove conn from connections fd:%d\n", conn->handler->fd);
 
 	gp_pending_task *task = NULL;
@@ -56,7 +57,9 @@ void new_connection_callback(int32_t sockfd, gp_inet_address *peeraddr)
 
 	gp_tcp_connection *conn = NULL;
 	create_gp_tcp_connection(&conn, loop, sockfd, &local_addr, peeraddr);
-	dictAdd(tcp_server->connections, &sockfd, conn);
+	dictAdd(tcp_server->connections, &sockfd, conn); 
+	conn_ref_inc(&conn);
+
 	conn_set_connection_callback(conn, tcp_server->connection_callback); 
 	conn_set_message_callback(conn, tcp_server->message_callback);
 	conn_set_write_complete_callback(conn, tcp_server->write_complete_callback);
@@ -66,6 +69,8 @@ void new_connection_callback(int32_t sockfd, gp_inet_address *peeraddr)
 	printf("create conn pending_task\n");
 	create_gp_pending_task(&task, GP_RUN_IN_LOOP_CONN, run_in_loop_create_conn, NULL, conn, NULL, 0);
 	gp_run_in_loop(loop, task);
+
+	conn_ref_dec(&conn);
 }
 
 void run_in_loop_server_start(gp_tcp_server * server, gp_tcp_connection *conn, char *msg, int len)

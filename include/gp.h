@@ -29,6 +29,7 @@
 	#define unlikely(x)   __builtin_expect((x), 0)
 #endif
 
+typedef struct gp_atomic_s gp_atomic;
 typedef struct gp_inet_address_s gp_inet_address;
 typedef struct gp_pending_task_s gp_pending_task;
 typedef struct gp_loop_s gp_loop;
@@ -101,7 +102,10 @@ struct gp_io_s {
     int fd; 
 };
 
-//TODO: add handle base class
+struct gp_atomic_s {
+	volatile int64_t counter;
+};
+
 struct gp_loop_s {
     int8_t        quit;
     int8_t        looping;
@@ -169,6 +173,7 @@ enum gp_state {
 };
 
 struct gp_tcp_connection_s{
+	gp_atomic ref;
 	gp_loop *loop;
 	gp_handler *handler;
 	int32_t fd;
@@ -460,8 +465,6 @@ typedef struct gp_conf_node_ {
 } gp_conf_node;
 
 
-
-
 /*-----------------------------------------------------------------------------------------------*/
 
 
@@ -547,6 +550,8 @@ extern void    conn_send(gp_tcp_connection *, char *, int);
 extern void    conn_send_in_loop(gp_tcp_connection *, char *, int);
 extern void    connection_established(gp_tcp_connection *);
 extern void    connection_destroyed(gp_tcp_connection *);
+extern void    conn_ref_inc(gp_tcp_connection **);
+extern void    conn_ref_dec(gp_tcp_connection **);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   create_gp_buffer(gp_buffer **);
@@ -927,6 +932,155 @@ int gp_conf_yaml_load_file_with_prefix(const char *filename, const char *prefix)
 
 size_t strlcpy(char *dst, const char *src, size_t siz);
 size_t strlcat(char *dst, const char *src, size_t siz);
+
+/*-----------------------------------------------gp_atomic--------------------------------------------*/
+
+#define LOCK_PREFIX_HERE \
+        ".section .smp_locks,\"a\"\n"   \
+        ".balign 4\n"           \
+        ".long 671f - .\n" /* offset */ \
+        ".previous\n"           \
+        "671:"
+#define LOCK_PREFIX LOCK_PREFIX_HERE "\n\tlock; "
+
+
+#define gp_atomic_get x86_64_atomic64_get
+#define gp_atomic_set(ptr, value)   x86_64_atomic64_set(ptr, value)
+#define gp_atomic_add(ptr, value)   x86_64_atomic64_add(ptr, value)
+#define gp_atomic_inc(ptr)  x86_64_atomic64_inc(ptr)
+#define gp_atomic_dec(ptr)  x86_64_atomic64_dec(ptr)
+#define gp_atomic_add_and_test(ptr, value)  x86_64_atomic64_add_and_test(ptr, value)
+#define gp_atomic_dec_and_test(ptr) x86_64_atomic64_dec_and_test(ptr)
+#define gp_atomic_inc_and_test(ptr) x86_64_atomic64_inc_and_test(ptr)
+
+static inline void x86_64_atomic64_init(gp_atomic *ptr)
+{   
+    ptr->counter = 0;
+}
+/**
+ * atomic_get - read atomic variable
+ * param @v: pointer of type atomic32_t 
+ *
+ * Atomically reads the value of @v
+ */
+static inline int64_t x86_64_atomic64_get(gp_atomic *ptr)
+{   
+    return (*(volatile int64_t *)&(ptr)->counter);
+}
+
+/**
+ * atomic_set - set atomic variable
+ * param @v: pointer of type atomic32_t 
+ * param @i: integer or long interger of required value
+ *
+ * Atomically sets the value of @v to @i
+ */
+static inline void x86_64_atomic64_set(gp_atomic *ptr, int64_t i)
+{   
+    (ptr)->counter = i;
+}
+
+/**
+ * atomic_add - add integer to atomic vatiable
+ * param @v: pointer of type atomic32_t 
+ * param @i: interger value to add
+ *
+ * Atomically adds @i to @v
+ */
+static inline void x86_64_atomic64_add(gp_atomic *v, long i)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "addq %1,%0 \n\t"
+        :"+m"(v->counter)
+        :"ir"((long)i)
+        );
+}
+
+/**
+ * atomic_inc - increment atomic variable
+ * param @v: pointer of type atomic32_t 
+ * 
+ * Atomically increments @v by 1
+ */
+static inline void x86_64_atomic64_inc(gp_atomic *v)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "incq %0    \n\t"
+        :"+m"(v->counter)
+        );
+}
+
+/**
+ * atomic_dec - decrement atomic variable
+ * param @v: pointer of type of atomic32_t 
+ * 
+ * Atomically decrements @v by 1
+ */
+static inline void x86_64_atomic64_dec(gp_atomic *v)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "decq %0    \n\t"
+        :"+m"(v->counter)
+        );
+}
+/**
+ * atomic_inc_and_test - increment and test
+ * param @v: pointer of type of atomic64_t 
+ *
+ * Atomically increment @v by 1
+ * if (atomic value == 0) return true;
+ * else return false
+ */
+static inline int x86_64_atomic64_inc_and_test(gp_atomic *v)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "incq %0    \n\t"
+        :"+m"(v->counter)
+        :
+        :"memory");
+    return v->counter == 0;
+}
+
+/**
+ * atomic_dec_and_test -  decrement and test
+ * param @v: pointer of type of atomic64_t 
+ *
+ * Atomically decrement @v by 1
+ * if (atomic value == 0) return true;
+ * else return false;
+ */
+static inline int x86_64_atomic64_dec_and_test(gp_atomic *v)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "decq %0    \n\t" 
+        :"+m"(v->counter)
+        :
+        :"memory"
+        );
+    return v->counter == 0;
+}
+
+/**
+ * atomic64_add_and_test - add and test
+ * param @v: pointer of type of atomic64_t 
+ * param @i:integer value to add
+ * 
+ * Atomically adds @i to @v
+ * if (atomic value == 0) return true;
+ * else return false
+ */
+    
+static inline int x86_64_atomic64_add_and_test(gp_atomic *v, long i)
+{
+    __asm__ __volatile__ (
+        LOCK_PREFIX "addq %1, %0    \n\t"
+        :"+m"(v->counter)
+        :"ir"((long)i)
+        :"memory"
+        );
+    return v->counter == 0;
+}
+
 
 
 #endif

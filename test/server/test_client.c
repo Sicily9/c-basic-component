@@ -50,8 +50,8 @@ int main(int argc,char *argv[])
 		}
 #endif
 
-#if 0
-		char buf[20] = {0};
+#if 1
+		char buf[40] = {0};
 		n = recv(sockfd, buf, sizeof buf, 0); 
 		if(n < 0) {
 			perror("receive");

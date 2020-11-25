@@ -229,6 +229,7 @@ int8_t is_in_loop_thread(gp_loop *loop)
 void gp_queue_in_loop(gp_loop *loop, gp_pending_task *task)
 {
 	//TODO:多线程 per loop per thread时 得上锁
+	conn_ref_inc(&task->conn);
 	gp_list_append(&loop->pending_list, task);
 
 	if(!is_in_loop_thread(loop) || loop->calling_pending_functors)
@@ -244,18 +245,24 @@ void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
     	{
         	case GP_RUN_IN_LOOP_TRANS:
         	{
+				conn_ref_inc(&task->conn);
             	task->pending_func(NULL, task->conn, task->msg, task->len);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_CONN:
         	{
 				printf("run in loop conn_pending_task, fd:%d\n", task->conn->fd);
+				conn_ref_inc(&task->conn);
             	task->pending_func(NULL, task->conn, NULL, 0);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_REMOVE_CONN:
         	{
+				conn_ref_inc(&task->conn);
             	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_SERVER_START:
@@ -287,18 +294,21 @@ static void do_pending_functors(gp_loop *loop)
         	{
 				printf("trans_pending_task, msg: %s\n", task->msg);
             	task->pending_func(NULL, task->conn, task->msg, task->len);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_CONN:
         	{
 				printf("conn_pending_task, fd:%d\n", task->conn->fd);
             	task->pending_func(NULL, task->conn, NULL, 0);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_REMOVE_CONN:
         	{
 				printf("remove conn pending_task, fd:%d\n", task->conn->fd);
             	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_SERVER_START:

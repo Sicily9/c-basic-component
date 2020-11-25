@@ -5,12 +5,15 @@ void connection_handler_close(gp_handler *handler)
 {
 	gp_tcp_server *server = get_tcp_server();
 	gp_tcp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	conn_ref_inc(&conn);
 
 	conn->state = k_disconnected;
 	disable_all(handler);
 	
 	conn->connection_callback(conn);
 	conn->close_callback(conn);
+	conn_ref_dec(&conn);
+	printf("conn: %ld\n", gp_atomic_get(&conn->ref));
 }
 
 void connection_handler_error(gp_handler *handler)
@@ -53,7 +56,9 @@ void connection_handler_read(gp_handler *handler)
 	printf("after receive %ld bytes, buffer len:%ld\n", n, readable_bytes(conn->input_buffer));
 	if(n > 0)
 	{
+		conn_ref_inc(&conn);
 		conn->message_callback(conn, conn->input_buffer);
+		conn_ref_dec(&conn);
 	}else if (n == 0) {
 		connection_handler_close(handler); //对方直接close时
 	}else {
@@ -182,6 +187,7 @@ void conn_force_close(gp_tcp_connection *conn)
 		gp_queue_in_loop(conn->loop, task);
 	}
 }
+
 void destruct_gp_tcp_connection(gp_tcp_connection *conn)
 {
 	destruct_gp_handler(conn->handler);
@@ -200,6 +206,7 @@ void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, 
 	conn->message_callback = NULL;
 	conn->connection_callback = NULL;
 	conn->write_complete_callback = NULL;
+	gp_atomic_set(&conn->ref, 1);
 
 	create_gp_handler(&conn->handler, loop, fd);
 	create_gp_buffer(&conn->input_buffer);
@@ -217,6 +224,24 @@ void create_gp_tcp_connection(gp_tcp_connection **tcp_connection, gp_loop *loop,
 	memset(tmp, 0, sizeof(*tmp));
 	init_gp_tcp_connection(tmp, loop, fd, localaddr, peeraddr);
 	*tcp_connection = tmp;
+}
+
+void conn_ref_inc(gp_tcp_connection **conn)
+{
+	gp_atomic_inc(&(*conn)->ref);
+	printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
+}
+
+void conn_ref_dec(gp_tcp_connection **conn)
+{
+	if(gp_atomic_dec_and_test(&(*conn)->ref)){
+		destruct_gp_tcp_connection(*conn);
+		*conn = NULL;
+	}
+	if(*conn == NULL)
+		printf("conn ref: 0\n");
+	else 
+		printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
 }
 
 void conn_set_write_complete_callback(gp_tcp_connection * conn, gp_write_complete_callback write_complete_callback)
