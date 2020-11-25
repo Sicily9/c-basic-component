@@ -50,7 +50,7 @@ int main(int argc,char *argv[])
 			perror("send");
  			exit(1);
  		}else{
-		//	printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
+			printf("send msg:%s state:%ld-%s\n", msg, n, strerror(errno));
 			free(msg);
 		}
 
@@ -63,7 +63,7 @@ int main(int argc,char *argv[])
 			perror("receive");
  			exit(1);
  		}else{
-		//	printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
+			printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
 			memset(buf, 0, sizeof buf);
 		}
     	gettimeofday(&end, NULL); 
