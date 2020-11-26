@@ -292,7 +292,7 @@ static void do_pending_functors(gp_loop *loop)
     	{
         	case GP_RUN_IN_LOOP_TRANS:
         	{
-				printf("trans_pending_task, msg: %s\n", task->msg);
+				printf("trans_pending_task, send msg\n");
             	task->pending_func(NULL, task->conn, task->msg, task->len);
 				conn_ref_dec(&task->conn);
             	break;

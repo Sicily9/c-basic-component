@@ -1,11 +1,30 @@
 #include "guish_server.h"
-#include "proto/test.pb-c.h"
+
+/*				client-server protocol format
+ *                -------------------------
+ *				 |         4 bytes         | 
+ *				 |     magic:0x1343EA4     |
+ *				 |-------------------------|             
+ *				 |	       4 bytes         |	
+ *               |           len           |
+ *               |-------------------------|                   
+ *               |         4 bytes         |
+ *               |        name_len         | 
+ *               |-------------------------|
+ *               |      name_len bytes     |
+ *               |           name          |
+ *               |-------------------------| 
+ *               | len - 4 - name_len bytes|   
+ *               |       protobuf-msg      |
+ *                -------------------------          
+ */                                        
 
 gp_task_processor *task_processor = NULL;
 
 uint32_t protobuf_default_callback(gp_tcp_connection *conn, ProtobufCMessage *msg)
 {
 	printf("protobuf_msg name:%s unknown message type\n", msg->descriptor->name);
+	return 0;
 }
 
 void handle_msg(void *msg)
@@ -70,6 +89,7 @@ void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 			run_task(task);
 
 			destroy_task(task);
+			free(tmsg);
       	} else {
         	break;  
       	}

@@ -13,6 +13,7 @@ static void update(gp_handler *handler){
 
 void destruct_gp_handler(gp_handler *tmp)
 {
+	gp_list_node_remove(&tmp->handler_node);
 	handler_remove(tmp);
 	close(tmp->fd);
 	free(tmp);
