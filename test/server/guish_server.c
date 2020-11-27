@@ -23,7 +23,10 @@ gp_task_processor *task_processor = NULL;
 
 uint32_t protobuf_default_callback(gp_tcp_connection *conn, ProtobufCMessage *msg)
 {
-	printf("protobuf_msg name:%s unknown message type\n", msg->descriptor->name);
+	int port = 0;
+	char ip[20];
+	get_peer_address(conn->fd, ip, &port, 20);
+	printf("%s:%d send protobuf_msg name:%s,  unknown message type\n", ip, port, msg->descriptor->name);
 	return 0;
 }
 

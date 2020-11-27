@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "gp.h"
-#include "proto/test.pb-c.h"
+#include "proto_interface/test.pb-c.h"
 
 int main(int argc,char *argv[])
 {
@@ -31,18 +31,35 @@ int main(int argc,char *argv[])
     printf("Get the Server~Cheers!\n");
     while(1){
 		size_t n = 0;
-		
-#if 1
+
 		Name a;
 		name__init(&a);
 		a.name = malloc(10);
-		strcpy(a.name, "i am a");
+		strcpy(a.name, "hu wan");
 
 		a.id = 1;
-		a.age = 3;
+		a.age = 23;
+
+		Name b;
+		name__init(&b);
+		b.name = malloc(10);
+		strcpy(b.name, "hu qian");
+
+		b.id = 2;
+		b.age = 24;
+
+		Person p;
+		person__init(&p);
+		p.id = 1;
+
+		p.n_name = 2;
+		p.name = malloc(2 * sizeof(Name *));
+		p.name[0] = &a;
+		p.name[1] = &b;
+
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&a, &msg);
+		int32_t size = encode((ProtobufCMessage *)&p, &msg);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 
@@ -54,9 +71,6 @@ int main(int argc,char *argv[])
 			free(msg);
 		}
 
-#endif
-
-#if 1
 		char buf[40] = {0};
 		n = recv(sockfd, buf, sizeof buf, 0); 
 		if(n < 0) {
@@ -69,7 +83,6 @@ int main(int argc,char *argv[])
     	gettimeofday(&end, NULL); 
 		long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 		printf("pingpong: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
-#endif
 		sleep(1);
 	}
 	return 0;

@@ -3,7 +3,6 @@
 const int k_header = 4;
 static dict * pb_map = NULL;
 
-
 static dict* get_pb_map(void)
 {
 	if(pb_map == NULL){

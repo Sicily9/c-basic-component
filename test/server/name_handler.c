@@ -1,5 +1,5 @@
 #include "guish_server.h"
-#include "proto/test.pb-c.h"
+#include "proto_interface/test.pb-c.h"
 
 uint32_t msg_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 {

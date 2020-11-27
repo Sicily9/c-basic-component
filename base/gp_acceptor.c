@@ -8,11 +8,14 @@ static void acceptor_read_callback(gp_handler *handler)
     bzero(&addr, sizeof addr);
 	socklen_t addrlen = (socklen_t)(sizeof addr);
     int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
-	char serv_ip[20], cli_ip[20];
-	int port, cli_port;
-	get_local_address(connfd, serv_ip, &port, 20);
-	get_peer_address(connfd, cli_ip, &cli_port, 20);
-	printf("fd:%d, new connection: %s:%d -> %s:%d\n", connfd, cli_ip, cli_port, serv_ip, port);
+
+	{
+		char serv_ip[20], cli_ip[20];
+		int port, cli_port;
+		get_local_address(connfd, serv_ip, &port, 20);
+		get_peer_address(connfd, cli_ip, &cli_port, 20);
+		printf("fd:%d, new connection: %s:%d -> %s:%d\n", connfd, cli_ip, cli_port, serv_ip, port);
+	}
 
 	gp_inet_address peeraddr;
 	peeraddr.addr = addr;

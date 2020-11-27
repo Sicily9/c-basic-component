@@ -1,7 +1,12 @@
-syntax ="proto2";
+syntax ="proto3";
 
 message Name{
-	required int32  id =1;
-	required string name =2;
-	required int32  age =3;
+	int32  id =1;
+	string name =2;
+	int32  age =3;
+}
+
+message Person{
+	int32 id = 1;
+	repeated Name name = 2;
 }
