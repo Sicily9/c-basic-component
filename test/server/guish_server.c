@@ -51,39 +51,8 @@ void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 {
     while (readable_bytes(buffer) >= 8)
 	{   
-		void* data = peek(buffer);  
-      	int32_t be32 = *(const int32_t*)(data);
-		int32_t magic = ntohl(be32);
-		if(unlikely(magic != 0x1343EA4))
-		{
-			printf("unknown message, don't handle magic:%d\n", magic);
-			return;
-		}
-
-		data = peek(buffer) + 4;  
-      	be32 = *(const int32_t*)(data);
-      	const int32_t len = ntohl(be32); 
-      	if (len > 65536 || len < 0)  {   
-        	break;
-      	}   
-      	else if ((readable_bytes(buffer)) >= len + 8)  
-      	{                                                    
-        	retrieve(buffer, 8);  
-        	data = peek(buffer);
-        	be32 = *(const int32_t*)(data); 
-        	const int32_t name_len = ntohl(be32);
-        	retrieve(buffer, 4);  
-            
-        	data = peek(buffer);
-			char * name = calloc(1, name_len);
-        	memcpy(name, data, name_len);
-        	retrieve(buffer, name_len); 
-
-        	data = peek(buffer);
-        	ProtobufCMessage *msg = decode(name, len - 4 - name_len, data);
-        	free(name);
-        	retrieve(buffer, len - 4 - name_len); 
-
+        ProtobufCMessage *msg = decode(buffer);
+		if(msg){
 			transport_msg *tmsg;
 			create_transport_msg(&tmsg, msg, conn);
 
@@ -93,9 +62,7 @@ void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 
 			destroy_task(task);
 			free(tmsg);
-      	} else {
-        	break;  
-      	}
+		}
 	}
 }
 

@@ -15,6 +15,7 @@ void register_msg_callback(char *name, gp_protobuf_msg_callback callback)
 {
 	dict *map = get_callback_map();
 	dictAdd(map, name, callback);
+	printf("register_msg_callback name:%s\n", name);
 }
 
 gp_protobuf_msg_callback get_msg_callback(const char *name)

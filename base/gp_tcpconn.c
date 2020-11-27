@@ -228,7 +228,7 @@ void create_gp_tcp_connection(gp_tcp_connection **tcp_connection, gp_loop *loop,
 void conn_ref_inc(gp_tcp_connection **conn)
 {
 	gp_atomic_inc(&(*conn)->ref);
-	printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
+	//printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
 }
 
 void conn_ref_dec(gp_tcp_connection **conn)
@@ -237,10 +237,7 @@ void conn_ref_dec(gp_tcp_connection **conn)
 		destruct_gp_tcp_connection(*conn);
 		*conn = NULL;
 	}
-	if(*conn == NULL)
-		printf("conn ref: 0\n");
-	else 
-		printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
+	//	printf("conn ref: %ld\n", (*conn != NULL) ? gp_atomic_get(&(*conn)->ref) : 0);
 }
 
 void conn_set_write_complete_callback(gp_tcp_connection * conn, gp_write_complete_callback write_complete_callback)

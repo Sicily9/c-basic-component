@@ -571,7 +571,7 @@ extern size_t  buffer_read_fd(gp_buffer *, int32_t, int *);
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
 extern size_t encode(ProtobufCMessage *, uint8_t **);
-extern ProtobufCMessage* decode(char *, size_t, void *);
+extern ProtobufCMessage* decode(gp_buffer *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void  get_local_address(int32_t, char a[], int *, int);

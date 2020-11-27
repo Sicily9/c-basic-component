@@ -12,6 +12,9 @@ long long fuck_end = 0;
 using namespace std;
 extern "C" {
 #include "gp.h"
+void early_init_test2(void) {
+	printf("test2\n");
+}
 
 void early_init_test(void) {
     start = timeInMicroseconds();
@@ -25,6 +28,8 @@ void init_test(void) {
 
 char name[] ="test";
 gp_module_init(test_module, MODULE_INIT_FIRST, name, init_test, early_init_test) ;
+
+gp_module_init(test2_module, MODULE_INIT_FIRST, "222", init_test, early_init_test2) ;
 
 }
 
