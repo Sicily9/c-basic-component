@@ -8,6 +8,7 @@ uint32_t attack_detect_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	printf("attack_detect:{name:%s, enable:%d, block:%d, log:%d}\n", attack_detect->name, attack_detect->enable, attack_detect->block, attack_detect->log);
 
 	char *str = "i receive the attack_detect msg";
+	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

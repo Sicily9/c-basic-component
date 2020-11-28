@@ -13,8 +13,7 @@ void init_gp_epoller(gp_epoller *epoller)
 	epoller->events_len = 1024;
 	epoller->events     = malloc(epoller->events_len * sizeof(struct epoll_event));
 	epoller->handlers   = dictCreate(INT_DICT, 0);
-}
-
+} 
 void create_gp_epoller(gp_epoller **epoller)
 {
 	gp_epoller *tmp = (gp_epoller *)malloc(sizeof(gp_epoller));

@@ -96,6 +96,7 @@ void conn_send_in_loop(gp_tcp_connection *conn, char *msg, int len)
     if (!is_writing(conn->handler) && readable_bytes(conn->output_buffer) == 0)
     {
         nwrote = write(conn->handler->fd, msg, len);
+		printf("nwrote:%ld, %d send_msg\n", nwrote, conn->handler->fd);
         if (nwrote >= 0)
         {
             remaining = len - nwrote;

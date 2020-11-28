@@ -209,32 +209,33 @@ void destruct_gp_timer_base(gp_timer_base *base)
 {
 	int32_t i;
 	gp_timer_list *tmp;
+	gp_timer_list *tmp2;
 	gp_list *root = NULL;
 	for (i = 0; i < TVR_SIZE; i++) {
 		root = &(base->tv1.vec[i]);
-		GP_LIST_FOREACH(root, tmp){
+		GP_LIST_FOREACH_SAFE(root, tmp2, tmp){
 			destruct_gp_timer(tmp);
 		}
 	}
 
 	for (i = 0; i < TVN_SIZE; i++) {
 		root =&(base->tv2.vec[i]);
-		GP_LIST_FOREACH(root, tmp){
+		GP_LIST_FOREACH_SAFE(root, tmp2, tmp){
 			destruct_gp_timer(tmp);
 		}
 
 		root = &(base->tv3.vec[i]);
-		GP_LIST_FOREACH(root, tmp){
+		GP_LIST_FOREACH_SAFE(root, tmp2, tmp){
 			destruct_gp_timer(tmp);
 		}
 
 		root = &(base->tv4.vec[i]);
-		GP_LIST_FOREACH(root, tmp){
+		GP_LIST_FOREACH_SAFE(root, tmp2, tmp){
 			destruct_gp_timer(tmp);
 		}
 
 		root = &(base->tv5.vec[i]);
-		GP_LIST_FOREACH(root, tmp){
+		GP_LIST_FOREACH_SAFE(root, tmp2, tmp){
 			destruct_gp_timer(tmp);
 		}
 	}

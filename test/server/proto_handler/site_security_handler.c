@@ -13,6 +13,7 @@ uint32_t site_security_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	}
 
 	char *str ="i receive the site_security msg";
+	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

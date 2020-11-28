@@ -8,6 +8,7 @@ uint32_t interface_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	printf("interface:{id:%d, name:%s, type:%d, speed:%d, ipv4:%s, ipv6:%s, mac:%s, mtu:%s, negotiate:%d, half:%d}\n", interface->id, interface->name, interface->type, interface->speed, interface->ipv4, interface->ipv6, interface->mac, interface->mtu, interface->negotiate, interface->half);
 
 	char *str = "i receive the interface msg";
+	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

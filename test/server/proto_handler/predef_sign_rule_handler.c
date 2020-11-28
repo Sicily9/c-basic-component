@@ -8,6 +8,7 @@ uint32_t predef_sign_rule_handler(gp_tcp_connection *conn, ProtobufCMessage *msg
 	printf("predef_sign_rule:{action:%d, predef_sign_rule_path:%s}\n", predef_sign_rule->action, predef_sign_rule->predef_sign_rule_path);
 
 	char *str = "i receive the predef_sign_rule msg";
+	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

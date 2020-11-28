@@ -14,8 +14,7 @@ void init_gp_buffer(gp_buffer *buffer)
 	buffer->writer_index = k_cheap_prepend;
 }
 
-void create_gp_buffer(gp_buffer **buffer)
-{
+void create_gp_buffer(gp_buffer **buffer) {
 	gp_buffer *tmp = malloc(sizeof(gp_buffer));
 	init_gp_buffer(tmp);
 	*buffer = tmp;
@@ -130,7 +129,8 @@ size_t buffer_read_fd(gp_buffer *buffer, int32_t fd, int *saved_errno)
   	const ssize_t n = readv(fd, vec, iovcnt);
   	if (n < 0)
   	{
-    *saved_errno = errno;
+    	*saved_errno = errno;
+		printf("errno:%d, %s\n", errno, strerror(errno)); 
   	}
   	else if ((size_t)(n) <= writable)
   	{

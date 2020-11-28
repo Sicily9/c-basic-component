@@ -8,6 +8,7 @@ uint32_t ssl_certificate_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	printf("ssl_certificate:{id:%d, cert_name:%s, enable:%d, cert_path:%s, key_path:%s, cert_password:%s}\n", ssl_certificate->id, ssl_certificate->cert_name, ssl_certificate->enable, ssl_certificate->cert_path, ssl_certificate->key_path, ssl_certificate->cert_password);
 
 	char *str ="i receive the ssl_certificate msg";
+	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }
