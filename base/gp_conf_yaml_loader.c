@@ -230,7 +230,8 @@ gp_conf_yaml_parse(yaml_parser_t *parser, gp_conf_node *parent, int inseq, int r
                         if (parent->val == NULL) {
                             parent->val = strdup(value);
                             if (parent->val && strchr(parent->val, '_'))
-                                mangle(parent->val);
+							{}
+                              //  mangle(parent->val);
                         }
                     }
                     gp_conf_node *existing = gp_conf_node_lookup_child(parent, value);
@@ -247,9 +248,9 @@ gp_conf_yaml_parse(yaml_parser_t *parser, gp_conf_node *parent, int inseq, int r
                             if (!(parent->name &&
                                    ((strcmp(parent->name, "address-groups") == 0) ||
                                     (strcmp(parent->name, "port-groups") == 0)))) {
-                                mangle(node->name);
+                              //  mangle(node->name);
                                 if (mangle_errors < MANGLE_ERRORS_MAX) {
-                                    mangle_errors++;
+                              //      mangle_errors++;
                                 }
                             }
                         }

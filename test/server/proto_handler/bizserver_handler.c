@@ -8,7 +8,7 @@ uint32_t bizserver_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	printf("bizserver:{protocol:%s, address:%s, port:%s}\n", bizserver->protocol, bizserver->address, bizserver->port);
 
 	char *str = "i receive the bizserver msg";
-	printf("fd:%ld, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
+	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

@@ -13,7 +13,7 @@ uint32_t define_rule_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	}
 
 	char *str ="i receive the define_rule msg";
-	printf("fd:%ld, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
+	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }
