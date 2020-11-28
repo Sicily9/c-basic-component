@@ -13,7 +13,6 @@ uint32_t static_route_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 
 void early_init_static_route_handler(void)
 {
-	printf("register StaticRoute\n");
 	register_msg_callback("StaticRoute", static_route_handler);
 	register_name_pb_map("StaticRoute", &static_route__descriptor);
 }

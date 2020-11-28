@@ -7,13 +7,13 @@ uint32_t dns_config_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 
 	printf("dns_config:{id:%d, interface_name:%s, host_name:%s, preferred_server:%s, alternative_server:%s}\n", dns_config->id, dns_config->interface_name, dns_config->host_name, dns_config->preferred_server, dns_config->alternative_server);
 
-	conn_send(conn, "i receive the dns_config msg", 8);
+	char *str = "i receive the dns_config msg";
+	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }
 
 void early_init_dns_config_handler(void)
 {
-	printf("register DnsConfig\n");
 	register_msg_callback("DnsConfig", dns_config_handler);
 	register_name_pb_map("DnsConfig", &dns_config__descriptor);
 }

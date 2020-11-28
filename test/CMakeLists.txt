@@ -2,7 +2,6 @@ if(test)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/test/bin)
 	set(list_src "list/test_list.cpp" "list/sds.h" "list/sds.c" "test.h")
 	set(dict_src "dict/test_dict.cpp" "dict/sds.h" "dict/sds.c" "test.h")
-	set(loop_src "loop/test_loop.c") 
 	set(server_src "server/guish_main.c"
 			"server/proto_interface/cwaf_config_buf.pb-c.h"
 			"server/proto_interface/cwaf_config_buf.pb-c.c" 
@@ -10,6 +9,16 @@ if(test)
 			"server/proto_handler/dns_config_handler.c"
 			"server/proto_handler/static_route_handler.c"
 			"server/proto_handler/default_gateway_handler.c"
+			"server/proto_handler/manage_service_handler.c"
+			"server/proto_handler/interface_handler.c"
+			"server/proto_handler/match_option_handler.c"
+			"server/proto_handler/define_rule_handler.c"
+			"server/proto_handler/ssl_certificate_handler.c"
+			"server/proto_handler/bizserver_handler.c"
+			"server/proto_handler/attack_detect_handler.c"
+			"server/proto_handler/site_security_handler.c"
+			"server/proto_handler/predef_sign_rule_handler.c"
+			"server/proto_handler/virtual_service_handler.c"
 			) 
 	set(client_dns_config_src "client/test_client_dns_config.c" 
 			"client/proto_interface/cwaf_config_buf.pb-c.h"
@@ -20,6 +29,46 @@ if(test)
 			"client/proto_interface/cwaf_config_buf.pb-c.c"
 			) 
 	set(client_default_gateway_src "client/test_client_default_gateway.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_manage_service_src "client/test_client_manage_service.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_interface_src "client/test_client_interface.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_match_option_src "client/test_client_match_option.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_define_rule_src "client/test_client_define_rule.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_ssl_certificate_src "client/test_client_ssl_certificate.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_bizserver_src "client/test_client_bizserver.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_attack_detect_src "client/test_client_attack_detect.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_site_security_src "client/test_client_site_security.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_predef_sign_rule_src "client/test_client_predef_sign_rule.c" 
+			"client/proto_interface/cwaf_config_buf.pb-c.h"
+			"client/proto_interface/cwaf_config_buf.pb-c.c"
+			) 
+	set(client_virtual_service_src "client/test_client_virtual_service.c" 
 			"client/proto_interface/cwaf_config_buf.pb-c.h"
 			"client/proto_interface/cwaf_config_buf.pb-c.c"
 			) 
@@ -44,6 +93,17 @@ if(test)
 	build_target(T "gp_client_dns_config" SRC ${client_dns_config_src} LIBS ${lib2_dep})
 	build_target(T "gp_client_static_route" SRC ${client_static_route_src} LIBS ${lib2_dep})
 	build_target(T "gp_client_default_gateway" SRC ${client_default_gateway_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_manage_service" SRC ${client_manage_service_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_interface" SRC ${client_interface_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_match_option" SRC ${client_match_option_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_define_rule" SRC ${client_define_rule_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_ssl_certificate" SRC ${client_ssl_certificate_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_bizserver" SRC ${client_bizserver_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_attack_detect" SRC ${client_attack_detect_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_site_security" SRC ${client_site_security_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_predef_sign_rule" SRC ${client_predef_sign_rule_src} LIBS ${lib2_dep})
+	build_target(T "gp_client_virtual_service" SRC ${client_virtual_service_src} LIBS ${lib2_dep})
+
 
 	#add_custom_command(TARGET gp_thread
 	#		           POST_BUILD
