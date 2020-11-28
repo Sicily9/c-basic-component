@@ -8,7 +8,7 @@ uint32_t default_gateway_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
 	printf("default_gateway:{id:%d, interface_name:%s, ipv4_gateway:%s, ipv6_gateway:%s}\n", default_gateway->id, default_gateway->interface_name, default_gateway->ipv4_gateway, default_gateway->ipv6_gateway);
 
 	char *str = "i receive the default_gateway msg";
-	printf("fd:%d, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
+	printf("fd:%ld, send msg:%s, len:%d\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

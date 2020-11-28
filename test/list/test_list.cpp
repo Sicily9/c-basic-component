@@ -159,7 +159,7 @@ TEST_F(TestList, TestListNext) {
     tmp = (struct student *)gp_list_next(&list_append, tmp);
     gp_list_remove(&list_append, &s[2]);
     gp_list_remove(&list_append, &s[3]);
-    EXPECT_EQ(2,tmp->id);
+    EXPECT_EQ(5,tmp->id);
 
     tmp = (struct student *)gp_list_next(&list_append, tmp);
     EXPECT_TRUE(tmp == NULL);
