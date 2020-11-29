@@ -7,8 +7,8 @@ int kread_event = POLLIN | POLLPRI;
 int kwrite_event = POLLOUT;
 
 static void update(gp_handler *handler){
-	handler->add_to_loop = 1;
-	gp_loop_update_handler(handler->loop, handler);
+    handler->add_to_loop = 1;
+    gp_loop_update_handler(handler->loop, handler);
 }
 
 void destruct_gp_handler(gp_handler *tmp)
