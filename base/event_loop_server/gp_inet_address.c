@@ -10,7 +10,7 @@ void init_gp_inet_address(gp_inet_address *inet_address, char *ip, uint16_t port
         inet_address->addr6.sin6_port = htobe16(port);
         if (inet_pton(AF_INET6, ip, &inet_address->addr6.sin6_addr) <= 0){
 
-		}
+        }
     }else{
         bzero(&(inet_address->addr), sizeof inet_address->addr);
         inet_address->addr.sin_family = AF_INET;
