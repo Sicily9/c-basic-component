@@ -23,47 +23,47 @@ gp_task_processor *task_processor = NULL;
 
 uint32_t protobuf_default_callback(gp_tcp_connection *conn, ProtobufCMessage *msg)
 {
-	int port = 0;
-	char ip[20];
-	get_peer_address(conn->fd, ip, &port, 20);
-	printf("%s:%d send protobuf_msg name:%s,  unknown message type\n", ip, port, msg->descriptor->name);
-	return 0;
+    int port = 0;
+    char ip[20];
+    get_peer_address(conn->fd, ip, &port, 20);
+    printf("%s:%d send protobuf_msg name:%s,  unknown message type\n", ip, port, msg->descriptor->name);
+    return 0;
 }
 
 void handle_msg(void *msg)
 {
-	transport_msg *tmsg = msg;
-	ProtobufCMessage *pbmsg = tmsg->msg;
-	gp_tcp_connection *conn = tmsg->conn;
-	conn_ref_inc(&conn);
+    transport_msg *tmsg = msg;
+    ProtobufCMessage *pbmsg = tmsg->msg;
+    gp_tcp_connection *conn = tmsg->conn;
+    conn_ref_inc(&conn);
 
-	gp_protobuf_msg_callback cb = get_msg_callback(pbmsg->descriptor->name);
-	if(likely(cb != NULL))
-		cb(conn, pbmsg);
-	else
-		protobuf_default_callback(conn, pbmsg);
+    gp_protobuf_msg_callback cb = get_msg_callback(pbmsg->descriptor->name);
+    if(likely(cb != NULL))
+        cb(conn, pbmsg);
+    else
+        protobuf_default_callback(conn, pbmsg);
 
     protobuf_c_message_free_unpacked(pbmsg, NULL);
-	conn_ref_dec(&conn);
+    conn_ref_dec(&conn);
 }
 
 void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
 {
     while (readable_bytes(buffer) >= 8)
-	{   
+    {   
         ProtobufCMessage *msg = decode(buffer);
-		if(msg){
-			transport_msg *tmsg;
-			create_transport_msg(&tmsg, msg, conn);
+        if(msg){
+            transport_msg *tmsg;
+            create_transport_msg(&tmsg, msg, conn);
 
-			gp_task *task;
-			create_task(&task, get_task_processor(), handle_msg, tmsg);
-			run_task(task);
+            gp_task *task;
+            create_task(&task, get_task_processor(), handle_msg, tmsg);
+            run_task(task);
 
-			destroy_task(task);
-			free(tmsg);
-		}
-	}
+            destroy_task(task);
+            free(tmsg);
+        }
+    }
 }
 
 void on_connection(gp_tcp_connection *conn)
