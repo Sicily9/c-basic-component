@@ -1,11 +1,11 @@
 #include "guish_server.h"
 
-/*				client-server protocol format
+/*              client-server protocol format
  *                -------------------------
- *		         |         4 bytes         | 
+ *               |         4 bytes         | 
  *               |     magic:0x1343EA4     |
  *               |-------------------------|             
- *		         |	       4 bytes         |	
+ *               |       4 bytes           |	
  *               |           len           |
  *               |-------------------------|                   
  *               |         4 bytes         |            
