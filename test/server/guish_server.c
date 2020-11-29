@@ -2,14 +2,14 @@
 
 /*				client-server protocol format
  *                -------------------------
- *		 |         4 bytes         | 
- *		 |     magic:0x1343EA4     |
- *		 |-------------------------|             
- *		 |	   4 bytes         |	
+ *		         |         4 bytes         | 
+ *               |     magic:0x1343EA4     |
+ *               |-------------------------|             
+ *		         |	       4 bytes         |	
  *               |           len           |
  *               |-------------------------|                   
- *               |         4 bytes         |
- *               |        name_len         | 
+ *               |         4 bytes         |            
+ *               |        name_len         |                 
  *               |-------------------------|
  *               |      name_len bytes     |
  *               |           name          |
