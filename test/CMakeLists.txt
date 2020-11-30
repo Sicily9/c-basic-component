@@ -22,7 +22,7 @@ if(test)
     file(GLOB client_match_option_src 
             "client/test_client_match_option.c"
             "client/proto_interface/*")
-	file(GLOB client_define_rule_src 
+    file(GLOB client_define_rule_src 
             "client/test_client_define_rule.c"
             "client/proto_interface/*")
     file(GLOB client_ssl_certificate_src 
