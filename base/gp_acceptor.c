@@ -2,26 +2,25 @@
 
 static void acceptor_read_callback(gp_handler *handler)
 {
-	gp_acceptor * acceptor = get_tcp_server()->acceptor;
+	gp_acceptor * acceptor = get_server()->acceptor;
 
-	struct sockaddr_in addr;
+	struct sockaddr addr;
     bzero(&addr, sizeof addr);
 	socklen_t addrlen = (socklen_t)(sizeof addr);
     int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 	{
+        #if 0
 		char serv_ip[20], cli_ip[20];
 		int port, cli_port;
 		get_local_address(connfd, serv_ip, &port, 20);
 		get_peer_address(connfd, cli_ip, &cli_port, 20);
 		printf("fd:%d, new connection: %s:%d -> %s:%d\n", connfd, cli_ip, cli_port, serv_ip, port);
+        #endif
 	}
 
-	gp_inet_address peeraddr;
-	peeraddr.addr = addr;
-
 	if(connfd > 0){
-		acceptor->new_connection_callback(connfd, &peeraddr);
+		acceptor->new_connection_callback(connfd, &addr);
 	}else{
 		close(handler->fd);	
 	}
@@ -33,28 +32,28 @@ void set_new_connection_callback(gp_acceptor *acceptor, gp_new_connection_callba
 	acceptor->new_connection_callback = new_connection_callback;
 }
 
-void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_inet_address *inet_address)
+void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *sock_address)
 {
 	acceptor->loop = loop;
 	acceptor->listenning = 0;
-	acceptor->fd = socket(inet_address->addr.sin_family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP); 
+	acceptor->fd = socket(((struct sockaddr *)sock_address)->sa_family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0); 
 	printf("listen fd:%d\n", acceptor->fd);
 	create_gp_handler(&acceptor->accept_handler, loop, acceptor->fd);
 
 	int32_t optval = 1;
 	setsockopt(acceptor->fd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)(sizeof optval));
 
-	bind(acceptor->fd, (struct sockaddr*)&(inet_address->addr), sizeof(inet_address->addr));
+	bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), sizeof(sock_address->addr));
 
 	set_read_callback(acceptor->accept_handler, acceptor_read_callback);
 
 }
 
-void create_gp_acceptor(gp_acceptor **acceptor, gp_loop *loop, gp_inet_address *inet_address)
+void create_gp_acceptor(gp_acceptor **acceptor, gp_loop *loop, gp_sock_address *sock_address)
 {
 	gp_acceptor *tmp = malloc(sizeof(gp_acceptor));
 	memset(tmp, 0, sizeof(*tmp));
-	init_gp_acceptor(tmp, loop, inet_address);
+	init_gp_acceptor(tmp, loop, sock_address);
 	*acceptor = tmp;
 }
 

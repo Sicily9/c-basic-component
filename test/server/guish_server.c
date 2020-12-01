@@ -21,7 +21,7 @@
 
 gp_task_processor *task_processor = NULL;
 
-uint32_t protobuf_default_callback(gp_tcp_connection *conn, ProtobufCMessage *msg)
+uint32_t protobuf_default_callback(gp_connection *conn, ProtobufCMessage *msg)
 {
     int port = 0;
     char ip[20];
@@ -34,7 +34,7 @@ void handle_msg(void *msg)
 {
     transport_msg *tmsg = msg;
     ProtobufCMessage *pbmsg = tmsg->msg;
-    gp_tcp_connection *conn = tmsg->conn;
+    gp_connection *conn = tmsg->conn;
     conn_ref_inc(&conn);
 
     gp_protobuf_msg_callback cb = get_msg_callback(pbmsg->descriptor->name);
@@ -47,7 +47,7 @@ void handle_msg(void *msg)
     conn_ref_dec(&conn);
 }
 
-void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
+void on_message(gp_connection *conn, gp_buffer *buffer)
 {
     while (readable_bytes(buffer) >= 8)
     {   
@@ -66,28 +66,28 @@ void on_message(gp_tcp_connection *conn, gp_buffer *buffer)
     }
 }
 
-void on_connection(gp_tcp_connection *conn)
+void on_connection(gp_connection *conn)
 {
 
 }
 
 void guish_start_server(guish_server *server)
 {
-	start_server(server->tcp_server);
+	start_server(server->server);
 }
 
-void init_guish_server(guish_server *server, gp_loop *loop, gp_inet_address *address, char *name)
+void init_guish_server(guish_server *tcp_server, gp_loop *loop, gp_sock_address *address, char *name)
 {
-	gp_tcp_server *tcp_server = get_tcp_server();
-	server->loop = loop;
-	server->tcp_server = tcp_server;
-	init_gp_tcp_server(tcp_server, loop, address, "guish");
+	gp_server *server = get_server();
+	tcp_server->loop = loop;
+	tcp_server->server = server;
+	init_gp_server(server, loop, address, "guish");
 	
-	server_set_message_callback(tcp_server, on_message);
-	server_set_connection_callback(tcp_server, on_connection);
+	server_set_message_callback(server, on_message);
+	server_set_connection_callback(server, on_connection);
 }
 
-void create_guish_server(guish_server **server, gp_loop *loop, gp_inet_address *address, char *name)
+void create_guish_server(guish_server **server, gp_loop *loop, gp_sock_address *address, char *name)
 {
 	guish_server *tmp = malloc(sizeof(guish_server));
 	memset(tmp, 0, sizeof(guish_server));
@@ -95,13 +95,13 @@ void create_guish_server(guish_server **server, gp_loop *loop, gp_inet_address *
 	*server = tmp;
 }
 
-void init_transport_msg(transport_msg *tmsg, ProtobufCMessage *msg, gp_tcp_connection *conn)
+void init_transport_msg(transport_msg *tmsg, ProtobufCMessage *msg, gp_connection *conn)
 {
 	tmsg->msg = msg;
 	tmsg->conn = conn;
 }
 
-void create_transport_msg(transport_msg **tmsg, ProtobufCMessage *msg, gp_tcp_connection *conn)
+void create_transport_msg(transport_msg **tmsg, ProtobufCMessage *msg, gp_connection *conn)
 {
 	transport_msg *tmp = malloc(sizeof(transport_msg));
 	memset(tmp, 0, sizeof(transport_msg));

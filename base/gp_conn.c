@@ -3,8 +3,8 @@
 
 void connection_handler_close(gp_handler *handler)
 {
-	gp_tcp_server *server = get_tcp_server();
-	gp_tcp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_server *server = get_server();
+	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
 	conn_ref_inc(&conn);
 
 	conn->state = k_disconnected;
@@ -22,8 +22,8 @@ void connection_handler_error(gp_handler *handler)
 
 void connection_handler_write(gp_handler *handler)
 {
-	gp_tcp_server *server = get_tcp_server();
-	gp_tcp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_server *server = get_server();
+	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
 
 	size_t n = write(handler->fd, peek(conn->output_buffer), readable_bytes(conn->output_buffer));
 	if (n > 0)
@@ -46,8 +46,8 @@ void connection_handler_write(gp_handler *handler)
 
 void connection_handler_read(gp_handler *handler)
 {
-	gp_tcp_server *server = get_tcp_server();
-	gp_tcp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_server *server = get_server();
+	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
 	
 	int saved_errno = 0;
 	printf("buffer len:%ld\n", readable_bytes(conn->input_buffer));
@@ -67,7 +67,7 @@ void connection_handler_read(gp_handler *handler)
 
 }
 
-void connection_established(gp_tcp_connection *conn)
+void connection_established(gp_connection *conn)
 {
 	conn->state = k_connected;
 	enable_reading(conn->handler);
@@ -75,7 +75,7 @@ void connection_established(gp_tcp_connection *conn)
 	conn->connection_callback(conn);
 }
 
-void connection_destroyed(gp_tcp_connection *conn)
+void connection_destroyed(gp_connection *conn)
 {
 	if(conn->state == k_connected){
 		conn->state = k_disconnected;
@@ -85,7 +85,7 @@ void connection_destroyed(gp_tcp_connection *conn)
 	handler_remove(conn->handler);
 }
 
-void conn_send_in_loop(gp_tcp_connection *conn, char *msg, int len)
+void conn_send_in_loop(gp_connection *conn, char *msg, int len)
 {
     ssize_t nwrote = 0;
     size_t remaining = len;
@@ -129,12 +129,12 @@ void conn_send_in_loop(gp_tcp_connection *conn, char *msg, int len)
     }
 }
 
-void run_in_loop_trans(gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
+void run_in_loop_trans(gp_server *server, gp_connection *conn, char *msg, int len)
 {
 	conn_send_in_loop(conn, msg, len);
 }
 
-void conn_send(gp_tcp_connection *conn, char *data, int len)
+void conn_send(gp_connection *conn, char *data, int len)
 {
 	if(conn->state == k_connected)
 	{
@@ -149,7 +149,7 @@ void conn_send(gp_tcp_connection *conn, char *data, int len)
 	}
 }
 
-void run_in_loop_shutdown(gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
+void run_in_loop_shutdown(gp_server *server, gp_connection *conn, char *msg, int len)
 {
 	if(!is_writing(conn->handler))
 	{
@@ -157,7 +157,7 @@ void run_in_loop_shutdown(gp_tcp_server *server, gp_tcp_connection *conn, char *
 	}
 }
 
-void conn_shutdown(gp_tcp_connection *conn)
+void conn_shutdown(gp_connection *conn)
 {
 	if(conn->state == k_connected)
 	{
@@ -169,7 +169,7 @@ void conn_shutdown(gp_tcp_connection *conn)
 	}
 }
 
-void queue_in_loop_force_close(gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
+void queue_in_loop_force_close(gp_server *server, gp_connection *conn, char *msg, int len)
 {
 	if(conn->state == k_connected || conn->state == k_disconnecting)
 	{	
@@ -177,7 +177,7 @@ void queue_in_loop_force_close(gp_tcp_server *server, gp_tcp_connection *conn, c
 	}
 }
 
-void conn_force_close(gp_tcp_connection *conn)
+void conn_force_close(gp_connection *conn)
 {
 	if(conn->state == k_connected || conn->state == k_disconnecting)
 	{
@@ -188,7 +188,7 @@ void conn_force_close(gp_tcp_connection *conn)
 	}
 }
 
-void destruct_gp_tcp_connection(gp_tcp_connection *conn)
+void destruct_gp_connection(gp_connection *conn)
 {
 	destruct_gp_handler(conn->handler);
 	destruct_gp_buffer(conn->input_buffer);
@@ -196,11 +196,9 @@ void destruct_gp_tcp_connection(gp_tcp_connection *conn)
 	free(conn);
 }
 
-void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, gp_inet_address *localaddr, gp_inet_address *peeraddr)
+void init_gp_connection(gp_connection *conn, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
 {
 	conn->loop = loop;
-	conn->local_addr.addr = localaddr->addr;
-	conn->peer_addr.addr = peeraddr->addr;
 	conn->fd = fd;
 	conn->state = k_connecting;
 	conn->message_callback = NULL;
@@ -208,6 +206,8 @@ void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, 
 	conn->write_complete_callback = NULL;
 	gp_atomic_set(&conn->ref, 1);
 
+    init_gp_sock_address_by_sockaddr(&conn->local_addr, localaddr);
+    init_gp_sock_address_by_sockaddr(&conn->peer_addr, peeraddr);
 	create_gp_handler(&conn->handler, loop, fd);
 	create_gp_buffer(&conn->input_buffer);
 	create_gp_buffer(&conn->output_buffer);
@@ -218,45 +218,45 @@ void init_gp_tcp_connection(gp_tcp_connection *conn, gp_loop *loop, int32_t fd, 
 	set_error_callback(conn->handler, connection_handler_error);
 }
 
-void create_gp_tcp_connection(gp_tcp_connection **tcp_connection, gp_loop *loop, int32_t fd, gp_inet_address *localaddr, gp_inet_address *peeraddr)
+void create_gp_connection(gp_connection **connection, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
 {
-	gp_tcp_connection *tmp = malloc(sizeof(gp_tcp_connection));
+	gp_connection *tmp = malloc(sizeof(gp_connection));
 	memset(tmp, 0, sizeof(*tmp));
-	init_gp_tcp_connection(tmp, loop, fd, localaddr, peeraddr);
-	*tcp_connection = tmp;
+	init_gp_connection(tmp, loop, fd, localaddr, peeraddr);
+	*connection = tmp;
 }
 
-void conn_ref_inc(gp_tcp_connection **conn)
+void conn_ref_inc(gp_connection **conn)
 {
 	gp_atomic_inc(&(*conn)->ref);
 	//printf("conn ref: %ld\n", gp_atomic_get(&(*conn)->ref));
 }
 
-void conn_ref_dec(gp_tcp_connection **conn)
+void conn_ref_dec(gp_connection **conn)
 {
 	if(gp_atomic_dec_and_test(&(*conn)->ref)){
-		destruct_gp_tcp_connection(*conn);
+		destruct_gp_connection(*conn);
 		*conn = NULL;
 	}
 	//	printf("conn ref: %ld\n", (*conn != NULL) ? gp_atomic_get(&(*conn)->ref) : 0);
 }
 
-void conn_set_write_complete_callback(gp_tcp_connection * conn, gp_write_complete_callback write_complete_callback)
+void conn_set_write_complete_callback(gp_connection * conn, gp_write_complete_callback write_complete_callback)
 {
 	conn->write_complete_callback = write_complete_callback;
 }
 
-void conn_set_message_callback(gp_tcp_connection * conn, gp_message_callback callback)
+void conn_set_message_callback(gp_connection * conn, gp_message_callback callback)
 {
 	conn->message_callback = callback;
 }
 
-void conn_set_connection_callback(gp_tcp_connection * conn, gp_connection_callback callback)
+void conn_set_connection_callback(gp_connection * conn, gp_connection_callback callback)
 {
 	conn->connection_callback = callback;
 }
 
-void conn_set_close_callback(gp_tcp_connection * conn, gp_close_callback callback)
+void conn_set_close_callback(gp_connection * conn, gp_close_callback callback)
 {
 	conn->close_callback = callback;
 }

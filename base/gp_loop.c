@@ -117,13 +117,13 @@ void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
         	case GP_RUN_IN_LOOP_REMOVE_CONN:
         	{
 				conn_ref_inc(&task->conn);
-            	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+            	task->pending_func(task->server, task->conn, NULL, 0);
 				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_SERVER_START:
         	{
-            	task->pending_func(task->tcp_server, NULL, NULL, 0);
+            	task->pending_func(task->server, NULL, NULL, 0);
             	break;
         	}
         	default:
@@ -163,14 +163,14 @@ static void do_pending_functors(gp_loop *loop)
         	case GP_RUN_IN_LOOP_REMOVE_CONN:
         	{
 				printf("remove conn pending_task, fd:%d\n", task->conn->fd);
-            	task->pending_func(task->tcp_server, task->conn, NULL, 0);
+            	task->pending_func(task->server, task->conn, NULL, 0);
 				conn_ref_dec(&task->conn);
             	break;
         	}
         	case GP_RUN_IN_LOOP_SERVER_START:
         	{
 				printf("conn_server_start\n");
-            	task->pending_func(task->tcp_server, NULL, NULL, 0);
+            	task->pending_func(task->server, NULL, NULL, 0);
             	break;
         	}
         	default:

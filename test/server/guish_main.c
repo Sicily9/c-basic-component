@@ -7,8 +7,8 @@ int main()
 	gp_loop *loop = NULL;
 	create_gp_loop(&loop);
 
-	gp_inet_address *address = NULL;
-	create_gp_inet_address(&address, "0.0.0.0", 8000, 0);
+	gp_sock_address *address = NULL;
+	create_gp_sock_address(&address, "0.0.0.0", 8000, IP);
 
 	guish_server *server = NULL;
 	create_guish_server(&server, loop, address, "guish");

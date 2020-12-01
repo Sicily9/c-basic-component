@@ -1,7 +1,7 @@
 #include "server/guish_server.h"
 #include "server/proto_interface/cwaf_config_buf.pb-c.h"
 
-uint32_t predef_sign_rule_handler(gp_tcp_connection *conn, ProtobufCMessage *msg)
+uint32_t predef_sign_rule_handler(gp_connection *conn, ProtobufCMessage *msg)
 {
 	PredefSignRule *predef_sign_rule = (PredefSignRule *)msg;
 

@@ -1,9 +1,9 @@
 #include "gp.h"
 
-void init_gp_pending_task(gp_pending_task *task, int8_t type, gp_pending_func func, gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
+void init_gp_pending_task(gp_pending_task *task, int8_t type, gp_pending_func func, gp_server *server, gp_connection *conn, char *msg, int len)
 {
 	task->type = type;
-	task->tcp_server = server;
+	task->server = server;
 	task->conn = conn;
 	task->msg = malloc(len);
 	memcpy(task->msg, msg ,len);
@@ -14,7 +14,7 @@ void init_gp_pending_task(gp_pending_task *task, int8_t type, gp_pending_func fu
 }
 
 
-void create_gp_pending_task(gp_pending_task **task, int8_t type, gp_pending_func func, gp_tcp_server *server, gp_tcp_connection *conn, char *msg, int len)
+void create_gp_pending_task(gp_pending_task **task, int8_t type, gp_pending_func func, gp_server *server, gp_connection *conn, char *msg, int len)
 {
 	gp_pending_task *tmp = malloc(sizeof(gp_pending_task));
 	memset(tmp, 0, sizeof(*tmp));
