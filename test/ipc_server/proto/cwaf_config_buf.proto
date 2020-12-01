@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+//DNS配置
+message DnsConfig {
+    int32 id = 1;
+    string interface_name = 2;
+	string host_name = 3;
+	string preferred_server = 4;
+	string alternative_server = 5;
+}
+
+//静态路由  
+message StaticRoute {
+    int32 id = 1;
+    string interface_name = 2;
+	string dst_ip= 3;
+	string subnet_mask = 4;
+	string gateway = 5;
+}
+
+//默认网关  
+message DefaultGateway {
+    int32 id = 1;
+    string interface_name = 2;
+	string ipv4_gateway= 3;
+	string ipv6_gateway = 4;
+}
+
+//管理服务  
+message ManageService {
+    int32 id = 1;
+    string name = 2;
+	string port= 3;
+	string whitelist = 4;
+	string ser_interface = 5;
+}
+
+//接口配置
+message Interface {
+    int32 id = 1;
+    string name = 2;
+	int32 type= 3;
+	int32 speed = 4;
+	string ipv4 = 5;
+	string ipv6 = 6;
+	string mac = 7;
+	string mtu = 8;
+	int32 negotiate = 9;
+	int32 half = 10;
+}
+
+message MatchOption {
+    string field = 1;
+    int32 match_rule = 2;
+	string expression= 3;
+}
+
+//自定义规则  
+message DefineRule {
+    int32 id = 1;
+    int32 seq = 2;
+	int32 mode= 3;
+	int32 enable = 4;
+	int32 level = 5;
+	int32 log_type = 6;
+	string name = 7;
+	repeated MatchOption match_option_list = 8;
+	string expire_time = 9;
+}
+
+//SSL证书  
+message SslCertificate {
+    int32 id = 1;
+    string cert_name = 2;
+	int32 enable= 3;
+	string cert_path = 4;
+	string key_path = 5;
+	string cert_password = 6;
+}
+
+//业务服务器  
+message Bizserver {
+    string protocol = 1;
+	string address= 2;
+	string port = 3;
+}
+
+//攻击检测模块
+message AttackDetect {
+    string name = 1;
+    int32 enable = 2;
+	int32 block= 3;
+	int32 log = 4;
+}
+
+//站点安全  
+message SiteSecurity {
+    int32 id = 1;
+    string name = 2;
+	string decode_type= 3;
+	int32 block_type = 4;
+	repeated AttackDetect attack_detect_list = 5;
+	string http_req_body_detect = 6;
+}
+
+//特征库升级
+message PredefSignRule {
+    int32 action = 1;
+    string predef_sign_rule_path = 2;
+}  
+
+//虚拟服务  
+message VirtualService {
+    int32 id = 1;
+    string name = 2;
+	string bind_domain= 3;
+	int32 enable = 4;
+	int32 ssl_enable = 5;
+	string ports = 6;
+	repeated SslCertificate cw_ssl_certificate = 7;
+	string ssl_version = 8;
+	string ssl_cipher = 9;
+	int32 response_type= 10;
+	repeated Bizserver bizserver_list= 11;
+	repeated SiteSecurity cw_site_security= 12;
+}
+
+  
+message CwConfig {
+    int32 action = 1;
+	DnsConfig dnsConfig= 2;
+	ManageService manageService= 3;
+	DefaultGateway defaultGateway= 4;
+	StaticRoute staticRoute= 5;
+	Interface interface= 6;
+	DefineRule defineRule= 7;
+	SslCertificate sslCertificate= 8;
+	SiteSecurity siteSecurity= 9;
+	PredefSignRule predefSignRule= 10;
+	VirtualService virtualService= 11;
+	
+}
