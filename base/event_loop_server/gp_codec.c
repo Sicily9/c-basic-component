@@ -18,6 +18,23 @@ void register_name_pb_map(char *name, const ProtobufCMessageDescriptor *desc)
 	printf("register_name_pb_map name:%s\n", name);
 }
 
+size_t encode_errcode(int32_t errcode, uint8_t **buf)
+{
+	int32_t len = k_header + k_header;
+
+	uint8_t *str = malloc(len);
+	*buf = str;
+
+	int32_t be32 = htonl(0x1343EA4);
+	memcpy(str, (int8_t *)&be32, sizeof(int32_t));
+    
+	be32 = htonl(errcode);
+	memcpy(str + k_header, (int8_t *)&be32, sizeof(int32_t));
+
+	return len;
+}
+
+
 size_t encode(ProtobufCMessage *msg, uint8_t **buf)
 {
 	const char * name = msg->descriptor->name;
