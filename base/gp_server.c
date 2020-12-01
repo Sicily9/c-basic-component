@@ -46,14 +46,13 @@ void new_connection_callback(int32_t sockfd, struct sockaddr *peer_addr)
 	gp_server * server = get_server();
 	gp_loop *loop = server->loop;
 
-	struct sockaddr local_addr;
-    bzero(&local_addr, sizeof local_addr);
+	struct sockaddr *local_addr = create_sockaddr(peer_addr);
 
     int len = get_gp_sock_len_by_sockaddr(peer_addr);
-    getsockname(sockfd, &local_addr, (socklen_t *)&len);
+    getsockname(sockfd, local_addr, (socklen_t *)&len);
 
 	gp_connection *conn = NULL;
-	create_gp_connection(&conn, loop, sockfd, &local_addr, peer_addr);
+	create_gp_connection(&conn, loop, sockfd, local_addr, peer_addr);
 	dictAdd(server->connections, &sockfd, conn); 
 	conn_ref_inc(&conn);
 

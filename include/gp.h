@@ -529,9 +529,10 @@ extern void    acceptor_listen(gp_acceptor *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void    create_gp_sock_address(gp_sock_address **, char *, uint16_t, uint8_t);
+extern struct sockaddr* create_sockaddr(struct sockaddr *);
 extern void    init_gp_sock_address(gp_sock_address *, char *, uint16_t, uint8_t);
 extern void    init_gp_sock_address_by_sockaddr(gp_sock_address *, struct sockaddr *);
-extern void    get_gp_sock_address(gp_sock_address *, char[]);
+extern void    get_gp_sock_address(gp_sock_address *, char[], int);
 extern int32_t get_gp_sock_len(gp_sock_address *);
 extern int32_t get_gp_sock_len_by_sockaddr(struct sockaddr *);
 extern int32_t get_gp_sock_len_by_fd(int32_t);

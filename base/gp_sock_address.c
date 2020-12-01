@@ -1,17 +1,19 @@
 #include "gp.h"
 #include <strings.h>
 
-void get_gp_sock_address(gp_sock_address *sock_address, char address[])
+void get_gp_sock_address(gp_sock_address *sock_address, char address[], int len)
 {
     struct sockaddr *addr = (struct sockaddr *)sock_address;
     if(addr->sa_family == AF_INET){
-        if (inet_pton(AF_INET, address, &((struct sockaddr_in *)addr)->sin_addr) <= 0){
+        if (inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr, address, len) <= 0){
         }
     }else if(addr->sa_family == AF_INET6){
-        if (inet_pton(AF_INET6, address, &((struct sockaddr_in6 *)addr)->sin6_addr) <= 0){
+        if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr, address, len) <= 0){
         }
     }else if(addr->sa_family == AF_UNIX){
-        strcpy(address, ((struct sockaddr_un *)addr)->sun_path);
+        if(len > sizeof((struct sockaddr_un *)addr)->sun_path)
+            len = sizeof((struct sockaddr_un *)addr)->sun_path;
+        strncpy(address, ((struct sockaddr_un *)addr)->sun_path, len);
     }
 }
 
@@ -99,3 +101,13 @@ void create_gp_sock_address(gp_sock_address **sock_address, char *address, uint1
 }
 
 
+struct sockaddr * create_sockaddr(struct sockaddr * addr)
+{
+    if(addr->sa_family == AF_INET){
+        return (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in));
+    }else if(addr->sa_family == AF_INET6){
+        return (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in6));
+    }else if(addr->sa_family == AF_UNIX){
+        return (struct sockaddr *)calloc(1, sizeof(struct sockaddr_un));
+    }
+}

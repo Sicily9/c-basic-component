@@ -210,9 +210,9 @@ void init_gp_connection(gp_connection *conn, gp_loop *loop, int32_t fd, struct s
     init_gp_sock_address_by_sockaddr(&conn->peer_addr, peeraddr);
 
     char local[40] = {0};
-    get_gp_sock_address(&conn->local_addr, local);
+    get_gp_sock_address(&conn->local_addr, local, 40);
     char peer[40] = {0};
-    get_gp_sock_address(&conn->peer_addr, peer);
+    get_gp_sock_address(&conn->peer_addr, peer, 40);
     printf("fd:%d, connection:%s->%s\n", conn->fd, peer, local);
 
 	create_gp_handler(&conn->handler, loop, fd);
