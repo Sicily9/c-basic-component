@@ -4,6 +4,10 @@ if(test)
             "server/*.c" "server/*.h"
             "server/proto_interface/*"
             "server/proto_handler/*.c")
+    file(GLOB ipc_server_src 
+            "ipc_server/*.c" "ipc_server/*.h"
+            "ipc_server/proto_interface/*"
+            "ipc_server/proto_handler/*.c")
     file(GLOB client_dns_config_src 
             "client/test_client_dns_config.c" 
             "client/proto_interface/*")
@@ -43,6 +47,9 @@ if(test)
     file(GLOB client_virtual_service_src 
             "client/test_client_virtual_service.c"
             "client/proto_interface/*")
+    file(GLOB ipc_client_virtual_service_src 
+            "ipc_client/test_client_virtual_service.c"
+            "ipc_client/proto_interface/*")
     file(GLOB list_src 
             "list/*.cpp" "list/*.h" 
             "list/*.c")
@@ -67,7 +74,8 @@ if(test)
     #gtest_discover_tests(gp_module)
     build_target(T "gp_thread" SRC ${thread_src} LIBS ${lib_dep})
     #build_target(T "gp_loop" SRC ${loop_src} LIBS ${lib_dep})
-    build_target(T "gp_server" SRC ${server_src} LIBS ${lib2_dep})
+    build_target(T "gp_server" SRC ${server_src} LIBS ${lib3_dep})
+    build_target(T "gp_ipc_server" SRC ${ipc_server_src} LIBS ${lib3_dep})
     build_target(T "gp_client_dns_config" SRC ${client_dns_config_src} LIBS
         ${lib3_dep})
     build_target(T "gp_client_static_route" SRC ${client_static_route_src} LIBS
@@ -91,6 +99,8 @@ if(test)
     build_target(T "gp_client_predef_sign_rule" SRC
         ${client_predef_sign_rule_src} LIBS ${lib3_dep})
     build_target(T "gp_client_virtual_service" SRC ${client_virtual_service_src}
+        LIBS ${lib3_dep})
+    build_target(T "gp_ipc_client_virtual_service" SRC ${ipc_client_virtual_service_src}
         LIBS ${lib3_dep})
 
 

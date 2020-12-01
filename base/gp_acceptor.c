@@ -6,7 +6,7 @@ static void acceptor_read_callback(gp_handler *handler)
 
 	struct sockaddr addr;
     bzero(&addr, sizeof addr);
-	socklen_t addrlen = (socklen_t)(sizeof addr);
+	socklen_t addrlen = sizeof(struct sockaddr_un);
     int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 	{
@@ -43,7 +43,16 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *soc
 	int32_t optval = 1;
 	setsockopt(acceptor->fd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)(sizeof optval));
 
-	bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), sizeof(sock_address->addr));
+    int len = get_gp_sock_len(sock_address);
+    char address[40];
+    get_gp_sock_address(sock_address, address);
+    if(((struct sockaddr *)sock_address)->sa_family == AF_UNIX)
+       unlink(address);
+	if(bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), len) < 0 ){
+        printf("size:%d, address:%s, errno:%d, %s\n",sizeof(*sock_address), address, errno, strerror(errno));
+		abort();
+    }
+    printf("size:%d, bind address:%s\n",sizeof(*sock_address), address);
 
 	set_read_callback(acceptor->accept_handler, acceptor_read_callback);
 
@@ -64,11 +73,12 @@ void acceptor_listen(gp_acceptor *acceptor)
 
 	char serv_ip[20];
 	int port;
-	get_local_address(acceptor->fd, serv_ip, &port, 20);
-	printf("listen address:%s:%d\n", serv_ip, port);
+	//get_local_address(acceptor->fd, serv_ip, &port, 20);
+	//printf("listen address:%s:%d\n", serv_ip, port);
 
 	if(ret < 0){
-		exit(-1);
+        printf("errno:%d, %s\n",errno, strerror(errno));
+		abort();
 	}
 	enable_reading(acceptor->accept_handler);
 }

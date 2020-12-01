@@ -48,8 +48,9 @@ void new_connection_callback(int32_t sockfd, struct sockaddr *peer_addr)
 
 	struct sockaddr local_addr;
     bzero(&local_addr, sizeof local_addr);
-    socklen_t addrlen = (socklen_t)(sizeof local_addr);
-    getsockname(sockfd, (struct sockaddr *)(&local_addr), &addrlen);
+
+    int len = get_gp_sock_len_by_sockaddr(peer_addr);
+    getsockname(sockfd, &local_addr, (socklen_t *)&len);
 
 	gp_connection *conn = NULL;
 	create_gp_connection(&conn, loop, sockfd, &local_addr, peer_addr);
