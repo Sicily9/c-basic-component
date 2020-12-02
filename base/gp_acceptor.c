@@ -49,10 +49,10 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *soc
     if(((struct sockaddr *)sock_address)->sa_family == AF_UNIX)
        unlink(address);
 	if(bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), len) < 0 ){
-        printf("size:%d, address:%s, errno:%d, %s\n",sizeof(*sock_address), address, errno, strerror(errno));
+        printf("size:%ld, address:%s, errno:%d, %s\n",sizeof(*sock_address), address, errno, strerror(errno));
 		abort();
     }
-    printf("size:%d, bind address:%s\n",sizeof(*sock_address), address);
+    printf("bind address:%s\n", address);
 
 	set_read_callback(acceptor->accept_handler, acceptor_read_callback);
 
@@ -70,11 +70,6 @@ void acceptor_listen(gp_acceptor *acceptor)
 {
 	acceptor->listenning = 1;
 	int32_t ret = listen(acceptor->fd, SOMAXCONN);
-
-	char serv_ip[20];
-	int port;
-	//get_local_address(acceptor->fd, serv_ip, &port, 20);
-	//printf("listen address:%s:%d\n", serv_ip, port);
 
 	if(ret < 0){
         printf("errno:%d, %s\n",errno, strerror(errno));

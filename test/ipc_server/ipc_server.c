@@ -19,7 +19,6 @@
  *                -------------------------          
  */                                        
 
-gp_task_processor *task_processor = NULL;
 
 uint32_t protobuf_default_callback(gp_connection *conn, ProtobufCMessage *msg)
 {
@@ -30,38 +29,21 @@ uint32_t protobuf_default_callback(gp_connection *conn, ProtobufCMessage *msg)
     return 0;
 }
 
-void handle_msg(void *msg)
-{
-    transport_msg *tmsg = msg;
-    ProtobufCMessage *pbmsg = tmsg->msg;
-    gp_connection *conn = tmsg->conn;
-    conn_ref_inc(&conn);
-
-    gp_protobuf_msg_callback cb = get_msg_callback(pbmsg->descriptor->name);
-    if(likely(cb != NULL))
-        cb(conn, pbmsg);
-    else
-        protobuf_default_callback(conn, pbmsg);
-
-    protobuf_c_message_free_unpacked(pbmsg, NULL);
-    conn_ref_dec(&conn);
-}
-
 void on_message(gp_connection *conn, gp_buffer *buffer)
 {
     while (readable_bytes(buffer) >= 8)
     {   
         ProtobufCMessage *msg = decode(buffer);
         if(msg){
-            transport_msg *tmsg;
-            create_transport_msg(&tmsg, msg, conn);
+            conn_ref_inc(&conn);
+            gp_protobuf_msg_callback cb = get_msg_callback(msg->descriptor->name);
+            if(likely(cb != NULL))
+                cb(conn, msg);
+            else
+                protobuf_default_callback(conn, msg);
 
-            gp_task *task;
-            create_task(&task, get_task_processor(), handle_msg, tmsg);
-            run_task(task);
-
-            destroy_task(task);
-            free(tmsg);
+            protobuf_c_message_free_unpacked(msg, NULL);
+            conn_ref_dec(&conn);
         }
     }
 }
@@ -95,24 +77,3 @@ void create_ipc_server(ipc_server **server, gp_loop *loop, gp_sock_address *addr
 	*server = tmp;
 }
 
-void init_transport_msg(transport_msg *tmsg, ProtobufCMessage *msg, gp_connection *conn)
-{
-	tmsg->msg = msg;
-	tmsg->conn = conn;
-}
-
-void create_transport_msg(transport_msg **tmsg, ProtobufCMessage *msg, gp_connection *conn)
-{
-	transport_msg *tmp = malloc(sizeof(transport_msg));
-	memset(tmp, 0, sizeof(transport_msg));
-	init_transport_msg(tmp, msg, conn);
-	*tmsg = tmp;
-}
-
-gp_task_processor *get_task_processor(void)
-{
-	if(task_processor == NULL){
-		create_task_processor(&task_processor, 1);
-	}
-	return task_processor;
-}

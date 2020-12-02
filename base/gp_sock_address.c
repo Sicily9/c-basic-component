@@ -30,6 +30,8 @@ int32_t get_gp_sock_len_by_fd(int32_t fd)
     }else if(addr.sa_family == AF_UNIX){
         return sizeof(struct sockaddr_un);
     }
+    
+    return 0;
 }
 
 int32_t get_gp_sock_len_by_sockaddr(struct sockaddr *addr)
@@ -41,6 +43,8 @@ int32_t get_gp_sock_len_by_sockaddr(struct sockaddr *addr)
     }else if(addr->sa_family == AF_UNIX){
         return sizeof(struct sockaddr_un);
     }
+
+    return 0;
 }
 
 int32_t get_gp_sock_len(gp_sock_address *sock_address)
@@ -53,6 +57,7 @@ int32_t get_gp_sock_len(gp_sock_address *sock_address)
     }else if(addr->sa_family == AF_UNIX){
         return offsetof(struct sockaddr_un, sun_path) + strlen(sock_address->path.sun_path);
     }
+    return 0;
 }
 
 void init_gp_sock_address(gp_sock_address *sock_address, char *address, uint16_t port, uint8_t type)
@@ -87,7 +92,6 @@ void init_gp_sock_address_by_sockaddr(gp_sock_address *sock_address, struct sock
     }else if(addr->sa_family == AF_UNIX){
         sock_address->path.sun_family = AF_UNIX;
         memcpy(sock_address->path.sun_path, ((struct sockaddr_un *)addr)->sun_path, strlen(((struct sockaddr_un *)addr)->sun_path));
-        printf("%d\n", offsetof(struct sockaddr_un, sun_path) + strlen(((struct sockaddr_un *)addr)->sun_path));
     }
 }
 
@@ -110,4 +114,6 @@ struct sockaddr * create_sockaddr(struct sockaddr * addr)
     }else if(addr->sa_family == AF_UNIX){
         return (struct sockaddr *)calloc(1, sizeof(struct sockaddr_un));
     }
+
+    return NULL;
 }
