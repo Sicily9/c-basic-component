@@ -103,8 +103,8 @@ ProtobufCMessage * decode(gp_buffer *buffer)
         data = peek(buffer);
 		ProtobufCMessage *msg = protobuf_c_message_unpack(desc, NULL, len - 4 - name_len, data);
         retrieve(buffer, len - 4 - name_len); 
+
 		return msg;
-		
 	} else {
         return NULL;  
     }
