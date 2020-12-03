@@ -106,7 +106,6 @@ ProtobufCMessage * decode(gp_buffer *buffer)
 		return msg;
 		
 	} else {
-        retrieve_all(buffer);  
         return NULL;  
     }
 }
