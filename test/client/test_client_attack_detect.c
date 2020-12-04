@@ -42,7 +42,8 @@ int main(int argc,char *argv[])
 		strcpy(attack_detect.name, "xssql");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&attack_detect, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&attack_detect, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

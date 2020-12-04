@@ -45,7 +45,8 @@ int main(int argc,char *argv[])
 		strcpy(bizserver.port, "8065");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&bizserver, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&bizserver, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

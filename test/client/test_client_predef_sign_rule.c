@@ -40,7 +40,8 @@ int main(int argc,char *argv[])
 		strcpy(predef_sign_rule.predef_sign_rule_path, "/tmp");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&predef_sign_rule, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&predef_sign_rule, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

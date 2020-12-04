@@ -69,7 +69,8 @@ int main(int argc,char *argv[])
 		strcpy(site_security.http_req_body_detect, "12345");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&site_security, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&site_security, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

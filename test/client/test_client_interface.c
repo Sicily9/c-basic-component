@@ -56,7 +56,8 @@ int main(int argc,char *argv[])
 		strcpy(interface.mtu, "1500");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&interface, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&interface, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

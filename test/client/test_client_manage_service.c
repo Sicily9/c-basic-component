@@ -50,7 +50,8 @@ int main(int argc,char *argv[])
 		strcpy(manage_service.ser_interface, "xge0/1");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&manage_service, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&manage_service, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

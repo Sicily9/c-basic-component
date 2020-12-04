@@ -50,7 +50,8 @@ int main(int argc,char *argv[])
 		strcpy(ssl_certificate.cert_password, "123456");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&ssl_certificate, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&ssl_certificate, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

@@ -213,7 +213,8 @@ int main(int argc,char *argv[])
 		virtual_service.cw_site_security[1] = &site_security2;
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&virtual_service, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&virtual_service, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		int n = send(sockfd, msg, size,0); 

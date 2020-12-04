@@ -46,7 +46,8 @@ int main(int argc,char *argv[])
 		strcpy(default_gateway.ipv6_gateway, "::0/0");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&default_gateway, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&default_gateway, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 
