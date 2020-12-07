@@ -44,7 +44,8 @@ int main(int argc,char *argv[])
 		strcpy(match_option.expression, "a!=1 && b==2");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&match_option, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&match_option, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

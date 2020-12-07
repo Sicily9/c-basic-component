@@ -581,11 +581,12 @@ extern void	   retrieve_all(gp_buffer *);
 extern char*   retrieve_as_string(gp_buffer *, size_t);
 extern char*   retrieve_all_as_string(gp_buffer *);
 extern void	   buffer_append(gp_buffer *, char *, size_t);
-extern size_t  buffer_read_fd(gp_buffer *, int32_t, int *);
+extern size_t  buffer_read_fd(gp_buffer *, int32_t, int32_t *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
-extern size_t encode(ProtobufCMessage *, uint8_t **);
+extern void    encode(ProtobufCMessage *, uint8_t **, int32_t *len);
+extern void    encode_errcode(int32_t, uint8_t **, int32_t *len);
 extern ProtobufCMessage* decode(gp_buffer *);
 
 /*-----------------------------------------------------------------------------------------------*/

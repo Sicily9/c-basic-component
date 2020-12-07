@@ -49,7 +49,8 @@ int main(int argc,char *argv[])
 		strcpy(static_route.gateway, "192.168.38.1");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&static_route, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&static_route, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

@@ -49,7 +49,8 @@ int main(int argc,char *argv[])
 		strcpy(dns_config.alternative_server, "server-2");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&dns_config, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&dns_config, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 

@@ -18,11 +18,11 @@ void register_name_pb_map(char *name, const ProtobufCMessageDescriptor *desc)
 	printf("register_name_pb_map name:%s\n", name);
 }
 
-size_t encode_errcode(int32_t errcode, uint8_t **buf)
+void encode_errcode(int32_t errcode, uint8_t **buf, int *len)
 {
-	int32_t len = k_header + k_header;
+	int32_t tmp = k_header + k_header;
 
-	uint8_t *str = malloc(len);
+	uint8_t *str = malloc(tmp);
 	*buf = str;
 
 	int32_t be32 = htonl(0x1343EA4);
@@ -31,24 +31,24 @@ size_t encode_errcode(int32_t errcode, uint8_t **buf)
 	be32 = htonl(errcode);
 	memcpy(str + k_header, (int8_t *)&be32, sizeof(int32_t));
 
-	return len;
+	*len = tmp;
 }
 
 
-size_t encode(ProtobufCMessage *msg, uint8_t **buf)
+void encode(ProtobufCMessage *msg, uint8_t **buf, int *len)
 {
 	const char * name = msg->descriptor->name;
 	int t = protobuf_c_message_get_packed_size(msg);
 	int32_t name_len = strlen(name) + 1;
-	int32_t len = k_header + k_header + k_header + name_len + t;
+	int32_t tmp_len = k_header + k_header + k_header + name_len + t;
 
-	uint8_t *str = malloc(len);
+	uint8_t *str = malloc(tmp_len);
 	*buf = str;
 
 	int32_t be32 = htonl(0x1343EA4);
 	memcpy(str, (int8_t *)&be32, sizeof(int32_t));
 
-	be32 = htonl(len - k_header - k_header);
+	be32 = htonl(tmp_len - k_header - k_header);
 	memcpy(str + k_header, (int8_t *)&be32, sizeof(int32_t));
 
 	be32 = htonl(name_len);
@@ -58,7 +58,7 @@ size_t encode(ProtobufCMessage *msg, uint8_t **buf)
 
 	protobuf_c_message_pack(msg, str + k_header + k_header + k_header + name_len);
 	
-	return len;
+	*len = tmp_len;
 }
 
 ProtobufCMessage * decode(gp_buffer *buffer)
@@ -103,10 +103,9 @@ ProtobufCMessage * decode(gp_buffer *buffer)
         data = peek(buffer);
 		ProtobufCMessage *msg = protobuf_c_message_unpack(desc, NULL, len - 4 - name_len, data);
         retrieve(buffer, len - 4 - name_len); 
+
 		return msg;
-		
 	} else {
-        retrieve_all(buffer);  
         return NULL;  
     }
 }

@@ -77,7 +77,8 @@ int main(int argc,char *argv[])
 		strcpy(define_rule.expire_time, "2020:12:1");
 
 		uint8_t *msg = NULL;
-		int32_t size = encode((ProtobufCMessage *)&define_rule, &msg);
+		int32_t size = 0;
+        encode((ProtobufCMessage *)&define_rule, &msg, &size);
 
     	gettimeofday(&start, NULL); 
 		n = send(sockfd, msg, size,0); 
