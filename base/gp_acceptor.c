@@ -2,12 +2,12 @@
 
 static void acceptor_read_callback(gp_handler *handler)
 {
-	gp_acceptor * acceptor = get_server()->acceptor;
+        gp_acceptor * acceptor = get_server()->acceptor;
 
-	struct sockaddr addr;
-    bzero(&addr, sizeof addr);
-	socklen_t addrlen = sizeof(struct sockaddr_un);
-    int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
+        struct sockaddr addr;
+        bzero(&addr, sizeof addr);
+        socklen_t addrlen = sizeof(struct sockaddr_un);
+        int32_t connfd = accept4(handler->fd, (struct sockaddr *)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 	{
         #if 0
