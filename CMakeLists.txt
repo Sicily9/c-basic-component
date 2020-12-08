@@ -18,7 +18,7 @@ endfunction(build_target)
 enable_testing() #这个要在项目根目录里开启
 
 option(test "enable test" ON)
-set(CMAKE_VERBOSE_MAKEFILE ON) # add compile information display
+set(CMAKE_VERBOSE_MAKEFILE OFF) # add compile information display
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)# set executable file path
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
