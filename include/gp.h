@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include <assert.h>
-#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <pthread.h>
@@ -39,6 +39,7 @@ typedef struct gp_handler_s gp_handler;
 typedef struct gp_epoller_s gp_epoller;
 typedef struct gp_acceptor_s gp_acceptor;
 typedef struct gp_server_s gp_server;
+typedef struct gp_ipc_server_s gp_ipc_server;
 typedef struct gp_connection_s gp_connection;
 typedef struct gp_buffer_s gp_buffer;
 typedef struct gp_io_s gp_io;
@@ -236,6 +237,11 @@ struct gp_server_s{
 	gp_message_callback 	   message_callback;
 	gp_write_complete_callback write_complete_callback;
 	gp_connection_callback 	   connection_callback;
+};
+
+struct gp_ipc_server_s{
+    gp_loop *loop;
+    gp_server *server;
 };
 
 struct gp_mtx_s {
@@ -550,6 +556,13 @@ extern void    server_set_message_callback(gp_server *, gp_message_callback);
 extern void    server_set_connection_callback(gp_server *, gp_connection_callback);
 extern void    start_server(gp_server *);
 extern gp_server *   get_server(void);
+
+/*-----------------------------------------------------------------------------------------------*/
+
+extern void	   init_gp_ipc_server(gp_ipc_server *, gp_loop *, gp_sock_address *, char *);
+extern void	   create_gp_ipc_server(gp_ipc_server **, gp_loop *, gp_sock_address *, char *);
+extern void	   gp_ipc_start_server(gp_ipc_server *);
+extern void	   gp_ipc_start(void);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   create_gp_connection(gp_connection **, gp_loop *, int32_t, struct sockaddr *, struct sockaddr *);
@@ -948,6 +961,9 @@ int gp_conf_yaml_load_file_with_prefix(const char *filename, const char *prefix)
 
 size_t strlcpy(char *dst, const char *src, size_t siz);
 size_t strlcat(char *dst, const char *src, size_t siz);
+/*-----------------------------------------------gp_atomic--------------------------------------------*/
+
+extern size_t get_process_name(char **);
 
 /*-----------------------------------------------gp_atomic--------------------------------------------*/
 

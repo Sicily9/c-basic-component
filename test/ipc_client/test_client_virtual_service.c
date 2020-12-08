@@ -35,7 +35,7 @@ int main(int argc,char *argv[])
 
     memset(&serun, 0, sizeof(struct sockaddr_un));
     serun.sun_family = AF_UNIX;
-    strncpy(serun.sun_path, "/tmp/ipc_server2.socket", sizeof(serun.sun_path) - 1);
+    strncpy(serun.sun_path, "/tmp/gp_ipc_server.socket", sizeof(serun.sun_path) - 1);
     int len = offsetof(struct sockaddr_un, sun_path) + strlen(serun.sun_path);
 	connect(sockfd,(struct sockaddr*)&serun, len);
 
@@ -232,7 +232,7 @@ int main(int argc,char *argv[])
 			perror("receive");
  			exit(1);
  		}else{
-			printf("recv msg:%s state:%ld-%s\n", buf, n, strerror(errno));
+			printf("recv msg:%s state:%d-%s\n", buf, n, strerror(errno));
 			memset(buf, 0, sizeof buf);
 		}
     	gettimeofday(&end, NULL); 
