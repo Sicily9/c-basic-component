@@ -1,4 +1,22 @@
 #include "gp.h"
+/*              client-server protocol format
+ *                -------------------------
+ *               |         4 bytes         | 
+ *               |     magic:0x1343EA4     |
+ *               |-------------------------|             
+ *               |       4 bytes           |	
+ *               |           len           |
+ *               |-------------------------|                   
+ *               |         4 bytes         |            
+ *               |        name_len         |                 
+ *               |-------------------------|
+ *               |      name_len bytes     |
+ *               |           name          |
+ *               |-------------------------| 
+ *               | len - 4 - name_len bytes|   
+ *               |       protobuf-msg      |
+ *                -------------------------          
+ */                                        
 
 const int k_header = 4;
 static dict * pb_map = NULL;
