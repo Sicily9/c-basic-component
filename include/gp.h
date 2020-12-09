@@ -535,7 +535,7 @@ extern void    acceptor_listen(gp_acceptor *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void    create_gp_sock_address(gp_sock_address **, char *, uint16_t, uint8_t);
-extern struct sockaddr* create_sockaddr(struct sockaddr *);
+extern struct  sockaddr* create_sockaddr(struct sockaddr *);
 extern void    init_gp_sock_address(gp_sock_address *, char *, uint16_t, uint8_t);
 extern void    init_gp_sock_address_by_sockaddr(gp_sock_address *, struct sockaddr *);
 extern void    get_gp_sock_address(gp_sock_address *, char[], int);
@@ -549,13 +549,13 @@ extern void    init_gp_pending_task(gp_pending_task *, int8_t, gp_pending_func, 
 extern void    destruct_gp_pending_task(gp_pending_task *);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void	   create_gp_server(gp_server **, gp_loop *, gp_sock_address *, char *);
-extern void	   init_gp_server(gp_server *, gp_loop *, gp_sock_address *, char *);
-extern void    server_set_write_complete_callback(gp_server *, gp_write_complete_callback);
-extern void    server_set_message_callback(gp_server *, gp_message_callback);
-extern void    server_set_connection_callback(gp_server *, gp_connection_callback);
-extern void    start_server(gp_server *);
-extern gp_server *   get_server(void);
+extern void        create_gp_server(gp_server **, gp_loop *, gp_sock_address *, char *);
+extern void        init_gp_server(gp_server *, gp_loop *, gp_sock_address *, char *);
+extern void        server_set_write_complete_callback(gp_server *, gp_write_complete_callback);
+extern void        server_set_message_callback(gp_server *, gp_message_callback);
+extern void        server_set_connection_callback(gp_server *, gp_connection_callback);
+extern void        start_server(gp_server *);
+extern gp_server * get_server(void);
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -565,21 +565,21 @@ extern void	   gp_ipc_start_server(gp_ipc_server *);
 extern void	   gp_ipc_start(void);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void	   create_gp_connection(gp_connection **, gp_loop *, int32_t, struct sockaddr *, struct sockaddr *);
-extern void	   init_gp_connection(gp_connection *, gp_loop *, int32_t, struct sockaddr *, struct sockaddr *);
-extern void	   destruct_gp_connection(gp_connection *);
-extern void    conn_set_write_complete_callback(gp_connection *, gp_write_complete_callback);
-extern void    conn_set_message_callback(gp_connection *, gp_message_callback);
-extern void    conn_set_connection_callback(gp_connection *, gp_connection_callback);
-extern void    conn_set_close_callback(gp_connection *, gp_close_callback);
-extern void    conn_force_close(gp_connection *);
-extern void    conn_shutdown(gp_connection *);
-extern void    conn_send(gp_connection *, char *, int);
-extern void    conn_send_in_loop(gp_connection *, char *, int);
-extern void    connection_established(gp_connection *);
-extern void    connection_destroyed(gp_connection *);
-extern void    conn_ref_inc(gp_connection **);
-extern void    conn_ref_dec(gp_connection **);
+extern void     create_gp_connection(gp_connection **, gp_loop *, int32_t, struct sockaddr *, struct sockaddr *);
+extern void     init_gp_connection(gp_connection *, gp_loop *, int32_t, struct sockaddr *, struct sockaddr *);
+extern void     destruct_gp_connection(gp_connection *);
+extern void     conn_set_write_complete_callback(gp_connection *, gp_write_complete_callback);
+extern void     conn_set_message_callback(gp_connection *, gp_message_callback);
+extern void     conn_set_connection_callback(gp_connection *, gp_connection_callback);
+extern void     conn_set_close_callback(gp_connection *, gp_close_callback);
+extern void     conn_force_close(gp_connection *);
+extern void     conn_shutdown(gp_connection *);
+extern void     conn_send(gp_connection *, char *, int);
+extern void     conn_send_in_loop(gp_connection *, char *, int);
+extern void     connection_established(gp_connection *);
+extern void     connection_destroyed(gp_connection *);
+extern void     conn_ref_inc(gp_connection **);
+extern void     conn_ref_dec(gp_connection **);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	         create_gp_buffer(gp_buffer **);
@@ -609,34 +609,34 @@ extern void	         buffer_append(gp_buffer *, char *, size_t);
 extern size_t            buffer_read_fd(gp_buffer *, int32_t, int32_t *);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void	   register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
-extern void    encode(ProtobufCMessage *, uint8_t **, int32_t *len);
-extern void    encode_errcode(int32_t, uint8_t **, int32_t *len);
+extern void	         register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
+extern void              encode(ProtobufCMessage *, uint8_t **, int32_t *len);
+extern void              encode_errcode(int32_t, uint8_t **, int32_t *len);
 extern ProtobufCMessage* decode(gp_buffer *);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void  get_local_address(int32_t, char a[], int *, int);
-extern void  get_peer_address(int32_t, char a[], int *, int);
+extern void                     get_local_address(int32_t, char a[], int *, int);
+extern void                     get_peer_address(int32_t, char a[], int *, int);
 
-extern void  register_msg_callback(char *name, gp_protobuf_msg_callback);
-extern gp_protobuf_msg_callback  get_msg_callback(const char *name);
+extern void                     register_msg_callback(char *name, gp_protobuf_msg_callback);
+extern gp_protobuf_msg_callback get_msg_callback(const char *name);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void  gp_list_init_offset(gp_list *, size_t);
-extern void *gp_list_first(const gp_list *); 
-extern void *gp_list_last(const gp_list *); 
+extern void* gp_list_first(const gp_list *); 
+extern void* gp_list_last(const gp_list *); 
 extern void  gp_list_append(gp_list *, void *); 
 extern void  gp_list_prepend(gp_list *, void *); 
 extern void  gp_list_insert_before(gp_list *, void *, void *); 
 extern void  gp_list_insert_after(gp_list *, void *, void *); 
 extern void  gp_list_replace(gp_list *, gp_list *); 
-extern void *gp_list_next(const gp_list *, void *); 
-extern void *gp_list_prev(const gp_list *, void *); 
+extern void* gp_list_next(const gp_list *, void *); 
+extern void* gp_list_prev(const gp_list *, void *); 
 extern void  gp_list_remove(gp_list *, void *); 
 extern int   gp_list_active(gp_list *, void *); 
 extern int   gp_list_empty(gp_list *); 
 extern int   gp_list_node_active(gp_list_node *); 
-extern void   gp_list_node_remove(gp_list_node *);
+extern void  gp_list_node_remove(gp_list_node *);
 
 //#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
@@ -715,13 +715,14 @@ do { \
 
 
 extern void create_gp_thr_manager(gp_thread_manager **gp_tmr, gp_thread_fn fn, void *arg);
-extern int init_gp_thr_manager(gp_thread_manager *gp_tmr, gp_thread_fn fn, void *arg);
+extern int  init_gp_thr_manager(gp_thread_manager *gp_tmr, gp_thread_fn fn, void *arg);
 extern void destroy_gp_thr_manager(gp_thread_manager *gp_tmr);
-extern int init_gp_thr(gp_thread *gp_thr, gp_thread_fn fn, void *arg);
+extern int  init_gp_thr(gp_thread *gp_thr, gp_thread_fn fn, void *arg);
 extern void init_gp_mtx(gp_mtx *mtx);
 extern void destroy_gp_mtx(gp_mtx *mtx);
 extern void init_gp_cv(gp_cv *cv, gp_mtx *mtx);
 extern void destroy_gp_cv(gp_cv *cv);
+
 extern gp_thread_mgr_operations gp_tmr_ops;
 
 /*----------------------------------------------gp_task-----------------------------------------------*/
@@ -898,30 +899,30 @@ static void __attribute__((constructor)) do_gp_init_ ## module(void) {  \
         gp_register_module(&module);    \
 }
 
-extern int gp_init_modules(void);
+extern int  gp_init_modules(void);
 extern void gp_register_module(gp_module_desc *desc);
 
 
 /*---------------------------------------------gp_timer-------------------------------------------------*/
 
-extern void create_gp_timer(gp_timer_list **, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
-extern void init_gp_timer(gp_timer_list *, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
-extern void gp_timer_add(gp_timer_base *, gp_timer_list *);
-extern void gp_timer_del(gp_timer_list *);
-extern void gp_timer_mod(gp_timer_base *, gp_timer_list *, uint32_t, int32_t, int32_t);
-extern void destruct_gp_timer(gp_timer_list *);
-extern void create_gp_timer_base(gp_timer_base **, uint32_t);
-extern void init_gp_timer_base(gp_timer_base *, uint32_t);
-extern void gp_run_timers(gp_timer_base *, uint32_t);
-extern void destruct_gp_timer_base(gp_timer_base *);
+extern void     create_gp_timer(gp_timer_list **, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
+extern void     init_gp_timer(gp_timer_list *, void (*fn)(void *), void *, uint32_t, int32_t, int32_t);
+extern void     gp_timer_add(gp_timer_base *, gp_timer_list *);
+extern void     gp_timer_del(gp_timer_list *);
+extern void     gp_timer_mod(gp_timer_base *, gp_timer_list *, uint32_t, int32_t, int32_t);
+extern void     destruct_gp_timer(gp_timer_list *);
+extern void     create_gp_timer_base(gp_timer_base **, uint32_t);
+extern void     init_gp_timer_base(gp_timer_base *, uint32_t);
+extern void     gp_run_timers(gp_timer_base *, uint32_t);
+extern void     destruct_gp_timer_base(gp_timer_base *);
 extern uint64_t gp_time(gp_clocktype);
 
 
 /*----------------------------------------------gp_ring---------------------------------------------*/
 extern void create_gp_ring(gp_ring **, int);
 extern void init_gp_ring(gp_ring *, int);
-extern int gp_ring_push(gp_ring *, int, void **);
-extern int gp_ring_pop(gp_ring *, int, void **);
+extern int  gp_ring_push(gp_ring *, int, void **);
+extern int  gp_ring_pop(gp_ring *, int, void **);
 
 
 /*-----------------------------------------------gp_conf--------------------------------------------*/
