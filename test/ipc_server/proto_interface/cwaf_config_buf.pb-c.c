@@ -592,6 +592,51 @@ void   virtual_service__free_unpacked
   assert(message->base.descriptor == &virtual_service__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   virtual_service_res__init
+                     (VirtualServiceRes         *message)
+{
+  static const VirtualServiceRes init_value = VIRTUAL_SERVICE_RES__INIT;
+  *message = init_value;
+}
+size_t virtual_service_res__get_packed_size
+                     (const VirtualServiceRes *message)
+{
+  assert(message->base.descriptor == &virtual_service_res__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t virtual_service_res__pack
+                     (const VirtualServiceRes *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &virtual_service_res__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t virtual_service_res__pack_to_buffer
+                     (const VirtualServiceRes *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &virtual_service_res__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+VirtualServiceRes *
+       virtual_service_res__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (VirtualServiceRes *)
+     protobuf_c_message_unpack (&virtual_service_res__descriptor,
+                                allocator, len, data);
+}
+void   virtual_service_res__free_unpacked
+                     (VirtualServiceRes *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &virtual_service_res__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   cw_config__init
                      (CwConfig         *message)
 {
@@ -1922,6 +1967,44 @@ const ProtobufCMessageDescriptor virtual_service__descriptor =
   virtual_service__field_indices_by_name,
   1,  virtual_service__number_ranges,
   (ProtobufCMessageInit) virtual_service__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor virtual_service_res__field_descriptors[1] =
+{
+  {
+    "id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(VirtualServiceRes, id),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned virtual_service_res__field_indices_by_name[] = {
+  0,   /* field[0] = id */
+};
+static const ProtobufCIntRange virtual_service_res__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor virtual_service_res__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "VirtualServiceRes",
+  "VirtualServiceRes",
+  "VirtualServiceRes",
+  "",
+  sizeof(VirtualServiceRes),
+  1,
+  virtual_service_res__field_descriptors,
+  virtual_service_res__field_indices_by_name,
+  1,  virtual_service_res__number_ranges,
+  (ProtobufCMessageInit) virtual_service_res__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor cw_config__field_descriptors[11] =

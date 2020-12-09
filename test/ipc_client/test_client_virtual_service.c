@@ -14,30 +14,10 @@
 #include "gp.h"
 #include "proto_interface/cwaf_config_buf.pb-c.h"
 
-#define CLIENT_DOMAIN_FILE1 "/tmp/client1.scoket"
-
 int main(int argc,char *argv[])
 {
-
+    register_name_sync_client_pb_map("VirtualServiceRes", &virtual_service_res__descriptor);
 	struct timeval start, end;  // define 2 struct timeval variables
- 
-
-    int sockfd;
-    struct sockaddr_un cliun, serun;
-    sockfd = socket(AF_UNIX,SOCK_STREAM,0);
-
-    memset(&cliun, 0, sizeof(struct sockaddr_un));
-    cliun.sun_family = AF_UNIX;
-    strncpy(cliun.sun_path, CLIENT_DOMAIN_FILE1, sizeof(cliun.sun_path) - 1);
-    unlink(cliun.sun_path);
-
-    bind(sockfd, (struct sockaddr *)&cliun, sizeof(struct sockaddr_un));
-
-    memset(&serun, 0, sizeof(struct sockaddr_un));
-    serun.sun_family = AF_UNIX;
-    strncpy(serun.sun_path, "/tmp/gp_ipc_server.socket", sizeof(serun.sun_path) - 1);
-    int len = offsetof(struct sockaddr_un, sun_path) + strlen(serun.sun_path);
-	connect(sockfd,(struct sockaddr*)&serun, len);
 
     printf("Get the Server~Cheers!\n");
     while(1){
@@ -215,7 +195,21 @@ int main(int argc,char *argv[])
 		uint8_t *msg = NULL;
 		int32_t size = 0;
         encode((ProtobufCMessage *)&virtual_service, &msg, &size);
+        
+    	gettimeofday(&start, NULL); 
+		VirtualServiceRes *pb_msg = (VirtualServiceRes *)send_msg_and_recv("gp_ipc_server", (char *)msg, size); 
+		if(pb_msg ==  NULL) {
+            exit(1);
+        }
+    	gettimeofday(&end, NULL); 
+		long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+		printf("pingpong: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
+        printf("recv msg: {id:%d}\n", pb_msg->id);
 
+        protobuf_c_message_free_unpacked((ProtobufCMessage *)pb_msg, NULL);
+        free(msg);
+
+#if 0
     	gettimeofday(&start, NULL); 
 		int n = send(sockfd, msg, size,0); 
 		if(n < 0) {
@@ -238,6 +232,7 @@ int main(int argc,char *argv[])
     	gettimeofday(&end, NULL); 
 		long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 		printf("pingpong: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
+#endif
 		sleep(1);
 	}
 	return 0;

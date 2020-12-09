@@ -464,7 +464,6 @@ struct gp_ring_s {
     void *msgs[0];	
 };
 
-
 typedef struct gp_conf_node_ {
     char *name;
     char *val;
@@ -556,6 +555,10 @@ extern void        server_set_message_callback(gp_server *, gp_message_callback)
 extern void        server_set_connection_callback(gp_server *, gp_connection_callback);
 extern void        start_server(gp_server *);
 extern gp_server * get_server(void);
+/*-----------------------------------------------------------------------------------------------*/
+extern void	         register_name_sync_client_pb_map(char *, const ProtobufCMessageDescriptor *desc);
+extern int32_t send_msg(char *, char *, int32_t);
+extern ProtobufCMessage* send_msg_and_recv(char *, char *, int32_t);
 
 /*-----------------------------------------------------------------------------------------------*/
 
@@ -617,6 +620,8 @@ extern ProtobufCMessage* decode(gp_buffer *);
 /*-----------------------------------------------------------------------------------------------*/
 extern void                     get_local_address(int32_t, char a[], int *, int);
 extern void                     get_peer_address(int32_t, char a[], int *, int);
+extern int32_t                  send_all_sync(int32_t, char*, int32_t *);
+extern int32_t                  read_all_sync(int32_t, char*, int32_t *);
 
 extern void                     register_msg_callback(char *name, gp_protobuf_msg_callback);
 extern gp_protobuf_msg_callback get_msg_callback(const char *name);

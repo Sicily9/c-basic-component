@@ -125,7 +125,10 @@ message VirtualService {
 	repeated SiteSecurity cw_site_security= 12;
 }
 
-  
+message VirtualServiceRes {
+    int32 id = 1;
+} 
+
 message CwConfig {
     int32 action = 1;
 	DnsConfig dnsConfig= 2;

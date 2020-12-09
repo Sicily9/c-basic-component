@@ -28,6 +28,7 @@ typedef struct _AttackDetect AttackDetect;
 typedef struct _SiteSecurity SiteSecurity;
 typedef struct _PredefSignRule PredefSignRule;
 typedef struct _VirtualService VirtualService;
+typedef struct _VirtualServiceRes VirtualServiceRes;
 typedef struct _CwConfig CwConfig;
 
 
@@ -266,6 +267,16 @@ struct  _VirtualService
 #define VIRTUAL_SERVICE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&virtual_service__descriptor) \
     , 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0, (char *)protobuf_c_empty_string, 0,NULL, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, 0,NULL, 0,NULL }
+
+
+struct  _VirtualServiceRes
+{
+  ProtobufCMessage base;
+  int32_t id;
+};
+#define VIRTUAL_SERVICE_RES__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&virtual_service_res__descriptor) \
+    , 0 }
 
 
 struct  _CwConfig
@@ -535,6 +546,25 @@ VirtualService *
 void   virtual_service__free_unpacked
                      (VirtualService *message,
                       ProtobufCAllocator *allocator);
+/* VirtualServiceRes methods */
+void   virtual_service_res__init
+                     (VirtualServiceRes         *message);
+size_t virtual_service_res__get_packed_size
+                     (const VirtualServiceRes   *message);
+size_t virtual_service_res__pack
+                     (const VirtualServiceRes   *message,
+                      uint8_t             *out);
+size_t virtual_service_res__pack_to_buffer
+                     (const VirtualServiceRes   *message,
+                      ProtobufCBuffer     *buffer);
+VirtualServiceRes *
+       virtual_service_res__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   virtual_service_res__free_unpacked
+                     (VirtualServiceRes *message,
+                      ProtobufCAllocator *allocator);
 /* CwConfig methods */
 void   cw_config__init
                      (CwConfig         *message);
@@ -595,6 +625,9 @@ typedef void (*PredefSignRule_Closure)
 typedef void (*VirtualService_Closure)
                  (const VirtualService *message,
                   void *closure_data);
+typedef void (*VirtualServiceRes_Closure)
+                 (const VirtualServiceRes *message,
+                  void *closure_data);
 typedef void (*CwConfig_Closure)
                  (const CwConfig *message,
                   void *closure_data);
@@ -617,6 +650,7 @@ extern const ProtobufCMessageDescriptor attack_detect__descriptor;
 extern const ProtobufCMessageDescriptor site_security__descriptor;
 extern const ProtobufCMessageDescriptor predef_sign_rule__descriptor;
 extern const ProtobufCMessageDescriptor virtual_service__descriptor;
+extern const ProtobufCMessageDescriptor virtual_service_res__descriptor;
 extern const ProtobufCMessageDescriptor cw_config__descriptor;
 
 PROTOBUF_C__END_DECLS
