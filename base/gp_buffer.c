@@ -144,3 +144,114 @@ size_t buffer_read_fd(gp_buffer *buffer, int32_t fd, int *saved_errno)
   	return n;
 }
 
+ProtobufCMessage* peek_pb_msg(gp_buffer *buffer, void *desc, int32_t len)
+{
+        if(likely(readable_bytes(buffer) >= len)){
+                ProtobufCMessage* msg = protobuf_c_message_unpack(desc, NULL, len, (const uint8_t *)peek(buffer));
+                return msg;
+        } else {
+                abort();
+        }
+}
+
+char* peek_str(gp_buffer *buffer, int32_t len)
+{
+        if(likely(readable_bytes(buffer) >= len)){
+                char *msg = malloc(len);
+                memcpy(msg, peek(buffer), len);
+                return msg;
+        } else {
+                abort();
+        }
+}
+
+int64_t peek_int64(gp_buffer *buffer)
+{
+        if(likely(readable_bytes(buffer) >= sizeof(int64_t))){
+                int64_t be64 = 0;
+                memcpy(&be64, peek(buffer), sizeof be64);
+                return be64toh(be64);
+        } else {
+                abort();
+        }
+}
+
+int32_t peek_int32(gp_buffer *buffer)
+{
+        if(likely(readable_bytes(buffer) >= sizeof(int32_t))){
+                int32_t be32 = 0;
+                memcpy(&be32, peek(buffer), sizeof be32);
+                return be32toh(be32);
+        } else {
+                abort();
+        }
+}
+
+int16_t peek_int16(gp_buffer *buffer)
+{
+        if(likely(readable_bytes(buffer) >= sizeof(int16_t))){
+                int16_t be16 = 0;
+                memcpy(&be16, peek(buffer), sizeof be16);
+                return be16toh(be16);
+        } else {
+                abort();
+        }
+}
+
+int8_t peek_int8(gp_buffer *buffer)
+{
+        if(likely(readable_bytes(buffer) >= sizeof(int8_t))){
+                int8_t x = *peek(buffer);
+                return x;
+        } else {
+                abort();
+        }
+}
+
+int64_t read_int64(gp_buffer *buffer)
+{
+        int64_t result = peek_int64(buffer);
+        retrieve(buffer, sizeof(int64_t));
+        
+        return result;
+}
+
+int32_t read_int32(gp_buffer *buffer)
+{
+        int32_t result = peek_int32(buffer);
+        retrieve(buffer, sizeof(int32_t));
+        
+        return result;
+}
+
+int16_t read_int16(gp_buffer *buffer)
+{
+        int16_t result = peek_int16(buffer);
+        retrieve(buffer, sizeof(int16_t));
+        
+        return result;
+}
+
+int8_t read_int8(gp_buffer *buffer)
+{
+        int8_t result = peek_int8(buffer);
+        retrieve(buffer, sizeof(int8_t));
+        
+        return result;
+}
+
+char* read_str(gp_buffer *buffer, int32_t len)
+{
+        char *result = read_str(buffer, len);
+        retrieve(buffer, len);
+        
+        return result;
+}
+
+ProtobufCMessage* read_pb_msg(gp_buffer *buffer, void *desc, int32_t len)
+{
+        ProtobufCMessage *result = read_pb_msg(buffer, desc, len);
+        retrieve(buffer, len);
+        
+        return result;
+}

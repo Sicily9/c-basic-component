@@ -63,50 +63,39 @@ void encode(ProtobufCMessage *msg, uint8_t **buf, int *len)
 
 ProtobufCMessage * decode(gp_buffer *buffer)
 {
-	void* data = peek(buffer);  
-    int32_t be32 = *(const int32_t*)(data);
-	int32_t magic = ntohl(be32);
-	if(unlikely(magic != 0x1343EA4))
-	{
-        retrieve_all(buffer);  
-		printf("unknown message, don't handle magic:%d\n", magic);
-		return NULL;
+        int32_t magic = peek_int32(buffer);
+        if(unlikely(magic != 0x1343EA4))
+        {
+                retrieve_all(buffer);  
+                printf("unknown message, don't handle magic:%d\n", magic);
+                return NULL;
 	}
 
-	data = peek(buffer) + 4;  
-    be32 = *(const int32_t*)(data);
-    const int32_t len = ntohl(be32); 
-    if (len > 65536 || len < 0)  {   
-        retrieve_all(buffer);  
-		return NULL;
-    }   
-    else if ((readable_bytes(buffer)) >= len + 8)  
-    {                                                    
-        retrieve(buffer, 8);  
-        data = peek(buffer);
-        be32 = *(const int32_t*)(data); 
-        const int32_t name_len = ntohl(be32);
-        retrieve(buffer, 4);  
+        void *data = peek(buffer) + 4;  
+        int32_t be32 = *(const int32_t*)(data);
+        const int32_t len = ntohl(be32); 
+        if (len > 65536 || len < 0)  {   
+                retrieve_all(buffer);  
+                return NULL;
+        } else if ((readable_bytes(buffer)) >= len + 8) {                                                    
+                retrieve(buffer, 8);  
+
+                int32_t name_len = read_int32(buffer);
             
-        data = peek(buffer);
-		char * name = calloc(1, name_len);
-        memcpy(name, data, name_len);
-        retrieve(buffer, name_len); 
+		char * name = read_str(buffer, name_len);
 		ProtobufCMessageDescriptor* desc = dictFetchValue(get_pb_map(), name);
 		if(unlikely(desc == NULL)){
 			printf("%s msg, haven't registered we don't handle\n", name);
-        	retrieve_all(buffer);  
+                        retrieve_all(buffer);  
 			return NULL;
 		}
-        free(name);
+                free(name);
 
-        data = peek(buffer);
-		ProtobufCMessage *msg = protobuf_c_message_unpack(desc, NULL, len - 4 - name_len, data);
-        retrieve(buffer, len - 4 - name_len); 
+		ProtobufCMessage *msg = read_pb_msg(buffer, desc, len - 4 - name_len);
 
 		return msg;
 	} else {
-        return NULL;  
+                return NULL;  
     }
 }
 

@@ -569,19 +569,31 @@ extern void    conn_ref_inc(gp_connection **);
 extern void    conn_ref_dec(gp_connection **);
 
 /*-----------------------------------------------------------------------------------------------*/
-extern void	   create_gp_buffer(gp_buffer **);
-extern void	   init_gp_buffer(gp_buffer *);
-extern void    destruct_gp_buffer(gp_buffer *);
-extern size_t  readable_bytes(gp_buffer *);
-extern size_t  writable_bytes(gp_buffer *);
-extern size_t  prepenable_bytes(gp_buffer *);
-extern char*   peek(gp_buffer *);
-extern void	   retrieve(gp_buffer *, size_t);
-extern void	   retrieve_all(gp_buffer *);
-extern char*   retrieve_as_string(gp_buffer *, size_t);
-extern char*   retrieve_all_as_string(gp_buffer *);
-extern void	   buffer_append(gp_buffer *, char *, size_t);
-extern size_t  buffer_read_fd(gp_buffer *, int32_t, int32_t *);
+extern void	         create_gp_buffer(gp_buffer **);
+extern void	         init_gp_buffer(gp_buffer *);
+extern void              destruct_gp_buffer(gp_buffer *);
+extern size_t            readable_bytes(gp_buffer *);
+extern size_t            writable_bytes(gp_buffer *);
+extern size_t            prepenable_bytes(gp_buffer *);
+extern char*             peek(gp_buffer *);
+extern int8_t            peek_int8(gp_buffer *);
+extern int16_t           peek_int16(gp_buffer *);
+extern int32_t           peek_int32(gp_buffer *);
+extern int64_t           peek_int64(gp_buffer *);
+extern char*             peek_str(gp_buffer *, int32_t);
+extern ProtobufCMessage* peek_pb_msg(gp_buffer *, void *, int32_t);
+extern int8_t            read_int8(gp_buffer *);
+extern int16_t           read_int16(gp_buffer *);
+extern int32_t           read_int32(gp_buffer *);
+extern int64_t           read_int64(gp_buffer *);
+extern char*             read_str(gp_buffer *, int32_t);
+extern ProtobufCMessage* read_pb_msg(gp_buffer *, void *, int32_t);
+extern void	         retrieve(gp_buffer *, size_t);
+extern void	         retrieve_all(gp_buffer *);
+extern char*             retrieve_as_string(gp_buffer *, size_t);
+extern char*             retrieve_all_as_string(gp_buffer *);
+extern void	         buffer_append(gp_buffer *, char *, size_t);
+extern size_t            buffer_read_fd(gp_buffer *, int32_t, int32_t *);
 
 /*-----------------------------------------------------------------------------------------------*/
 extern void	   register_name_pb_map(char *, const ProtobufCMessageDescriptor *desc);
