@@ -242,7 +242,7 @@ int8_t read_int8(gp_buffer *buffer)
 
 char* read_str(gp_buffer *buffer, int32_t len)
 {
-        char *result = read_str(buffer, len);
+        char *result = peek_str(buffer, len);
         retrieve(buffer, len);
         
         return result;
@@ -250,7 +250,7 @@ char* read_str(gp_buffer *buffer, int32_t len)
 
 ProtobufCMessage* read_pb_msg(gp_buffer *buffer, void *desc, int32_t len)
 {
-        ProtobufCMessage *result = read_pb_msg(buffer, desc, len);
+        ProtobufCMessage *result = peek_pb_msg(buffer, desc, len);
         retrieve(buffer, len);
         
         return result;
