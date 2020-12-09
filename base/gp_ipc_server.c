@@ -1,4 +1,4 @@
-#include "ipc_server.h"
+#include "gp.h"
 
 /*              client-server protocol format
  *                -------------------------
@@ -53,27 +53,50 @@ void on_connection(gp_connection *conn)
 
 }
 
-void ipc_start_server(ipc_server *server)
+void gp_ipc_start_server(gp_ipc_server *server)
 {
 	start_server(server->server);
 }
 
-void init_ipc_server(ipc_server *tcp_server, gp_loop *loop, gp_sock_address *address, char *name)
+void init_gp_ipc_server(gp_ipc_server *tcp_server, gp_loop *loop, gp_sock_address *address, char *name)
 {
 	gp_server *server = get_server();
 	tcp_server->loop = loop;
 	tcp_server->server = server;
-	init_gp_server(server, loop, address, "ipc");
+	init_gp_server(server, loop, address, "gp_ipc");
 	
 	server_set_message_callback(server, on_message);
 	server_set_connection_callback(server, on_connection);
 }
 
-void create_ipc_server(ipc_server **server, gp_loop *loop, gp_sock_address *address, char *name)
+void create_gp_ipc_server(gp_ipc_server **server, gp_loop *loop, gp_sock_address *address, char *name)
 {
-	ipc_server *tmp = malloc(sizeof(ipc_server));
-	memset(tmp, 0, sizeof(ipc_server));
-	init_ipc_server(tmp, loop, address, name);
+	gp_ipc_server *tmp = malloc(sizeof(gp_ipc_server));
+	memset(tmp, 0, sizeof(gp_ipc_server));
+	init_gp_ipc_server(tmp, loop, address, name);
 	*server = tmp;
 }
 
+
+void gp_ipc_start(void)
+{
+    gp_loop *loop = NULL;
+    create_gp_loop(&loop);
+
+    char *process_name = NULL;
+    get_process_name(&process_name);
+
+    char path[40] = {0};
+    snprintf(path, 40, "/tmp/%s.socket", process_name);
+
+    gp_sock_address *address = NULL;
+    create_gp_sock_address(&address, path, -1, DOMAIN);
+    free(process_name);
+
+    gp_ipc_server *server = NULL;
+    create_gp_ipc_server(&server, loop, address, "ipc");
+
+    gp_ipc_start_server(server);
+
+    gp_loop_run(loop, GP_RUN_DEFAULT);
+}

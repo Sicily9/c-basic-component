@@ -36,6 +36,7 @@ enum conf_state {
  *
  * \retval none
  */
+#if 0
 static void
 mangle(char *string)
 {
@@ -46,6 +47,7 @@ mangle(char *string)
 
     return;
 }
+#endif
 
 /**
  * \brief Set the directory name of the configuration file.

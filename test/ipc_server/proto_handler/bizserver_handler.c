@@ -1,4 +1,4 @@
-#include "ipc_server/ipc_server.h"
+#include "gp.h"
 #include "ipc_server/proto_interface/cwaf_config_buf.pb-c.h"
 
 uint32_t bizserver_handler(gp_connection *conn, ProtobufCMessage *msg)

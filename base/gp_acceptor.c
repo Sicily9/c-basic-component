@@ -46,9 +46,11 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *soc
     int len = get_gp_sock_len(sock_address);
     char address[40];
     get_gp_sock_address(sock_address, address, 40);
-    if(((struct sockaddr *)sock_address)->sa_family == AF_UNIX)
+    if(((struct sockaddr *)sock_address)->sa_family == AF_UNIX){
         unlink(address);
-	if(bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), len) < 0 ){
+    }
+
+    if(bind(acceptor->fd, (struct sockaddr*)&(sock_address->addr), len) < 0 ){
         printf("size:%ld, address:%s, errno:%d, %s\n",sizeof(*sock_address), address, errno, strerror(errno));
 		abort();
     }

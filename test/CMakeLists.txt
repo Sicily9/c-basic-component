@@ -5,7 +5,7 @@ if(test)
             "server/proto_interface/*"
             "server/proto_handler/*.c")
     file(GLOB ipc_server_src 
-            "ipc_server/*.c" "ipc_server/*.h"
+            "ipc_server/ipc_main.c"
             "ipc_server/proto_interface/*"
             "ipc_server/proto_handler/*.c")
     file(GLOB client_dns_config_src 
