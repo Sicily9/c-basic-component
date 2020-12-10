@@ -57,7 +57,6 @@ void create_gp_ipc_server(gp_ipc_server **server, gp_loop *loop, gp_sock_address
 	*server = tmp;
 }
 
-
 void gp_ipc_start(void)
 {
     gp_loop *loop = NULL;

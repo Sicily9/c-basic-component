@@ -3,7 +3,7 @@
 
 size_t get_process_name(char **process_name)
 {
-    char process_dir[4096];
+    char process_dir[4096] = {0};
     int len = sizeof(process_dir);
     char* path_end;
     if(readlink("/proc/self/exe", process_dir,len) <=0)

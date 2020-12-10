@@ -34,7 +34,9 @@ uint32_t virtual_service_handler(gp_connection *conn, ProtobufCMessage *msg)
     uint8_t *tmsg = NULL;
     int32_t size =0;
     encode((ProtobufCMessage *)&pb_msg, &tmsg, &size);
-	conn_send(conn, (char *)tmsg, size);
+    conn_send(conn, (char *)tmsg, size);
+
+    free(tmsg);
 
 
 #if 0
