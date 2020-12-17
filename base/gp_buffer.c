@@ -157,8 +157,9 @@ ProtobufCMessage* peek_pb_msg(gp_buffer *buffer, void *desc, int32_t len)
 char* peek_str(gp_buffer *buffer, int32_t len)
 {
         if(likely(readable_bytes(buffer) >= len)){
-                char *msg = malloc(len);
+                char *msg = malloc(len + 1);
                 memcpy(msg, peek(buffer), len);
+                msg[len] = '\0';
                 return msg;
         } else {
                 abort();
