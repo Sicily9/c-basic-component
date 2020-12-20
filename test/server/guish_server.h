@@ -6,7 +6,7 @@ typedef struct transport_msg_s transport_msg;
 struct guish_server_s
 {
 	gp_loop *loop;
-	gp_server *server;
+	gp_server server;
 };
 
 struct transport_msg_s

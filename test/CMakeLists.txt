@@ -8,6 +8,8 @@ if(test)
             "ipc_server/ipc_main.c"
             "ipc_server/proto_interface/*"
             "ipc_server/proto_handler/*.c")
+    file(GLOB ssl_server_src 
+            "ssl/ssl_server.c")        
     file(GLOB client_dns_config_src 
             "client/test_client_dns_config.c" 
             "client/proto_interface/*")
@@ -75,6 +77,7 @@ if(test)
     build_target(T "gp_thread" SRC ${thread_src} LIBS ${lib_dep})
     #build_target(T "gp_loop" SRC ${loop_src} LIBS ${lib_dep})
     build_target(T "gp_server" SRC ${server_src} LIBS ${lib3_dep})
+    build_target(T "gp_ssl_server" SRC ${ssl_server_src} LIBS ${lib3_dep})
     build_target(T "gp_ipc_server" SRC ${ipc_server_src} LIBS ${lib3_dep})
     build_target(T "gp_client_dns_config" SRC ${client_dns_config_src} LIBS
         ${lib3_dep})
