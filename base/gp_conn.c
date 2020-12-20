@@ -1,10 +1,13 @@
 #include "gp.h"
 #include <sys/socket.h>
 
+gp_connection * get_connection_from_handler(gp_handler *handler){
+        return container_of(handler, gp_connection, handler);
+}
+
 void connection_handler_close(gp_handler *handler)
 {
-	gp_server *server = get_server();
-	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_connection *conn = get_connection_from_handler(handler);
 	conn_ref_inc(&conn);
 
 	conn->state = k_disconnected;
@@ -22,8 +25,7 @@ void connection_handler_error(gp_handler *handler)
 
 void connection_handler_write(gp_handler *handler)
 {
-	gp_server *server = get_server();
-	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_connection *conn = get_connection_from_handler(handler);
 
 	size_t n = write(handler->fd, peek(conn->output_buffer), readable_bytes(conn->output_buffer));
 	if (n > 0)
@@ -46,8 +48,7 @@ void connection_handler_write(gp_handler *handler)
 
 void connection_handler_read(gp_handler *handler)
 {
-	gp_server *server = get_server();
-	gp_connection *conn = dictFetchValue(server->connections, &handler->fd);
+	gp_connection *conn = get_connection_from_handler(handler);
 	
 	int saved_errno = 0;
 	printf("buffer len:%ld\n", readable_bytes(conn->input_buffer));
@@ -70,7 +71,7 @@ void connection_handler_read(gp_handler *handler)
 void connection_established(gp_connection *conn)
 {
 	conn->state = k_connected;
-	enable_reading(conn->handler);
+	enable_reading(&conn->handler);
 
 	conn->connection_callback(conn);
 }
@@ -79,10 +80,10 @@ void connection_destroyed(gp_connection *conn)
 {
 	if(conn->state == k_connected){
 		conn->state = k_disconnected;
-		disable_all(conn->handler);
+		disable_all(&conn->handler);
 		conn->connection_callback(conn);
 	}
-	handler_remove(conn->handler);
+	handler_remove(&conn->handler);
 }
 
 void conn_send_in_loop(gp_connection *conn, char *msg, int len)
@@ -93,10 +94,10 @@ void conn_send_in_loop(gp_connection *conn, char *msg, int len)
     if (conn->state == k_disconnected)
         return;
     // if no thing in output queue, try writing directly
-    if (!is_writing(conn->handler) && readable_bytes(conn->output_buffer) == 0)
+    if (!is_writing(&conn->handler) && readable_bytes(conn->output_buffer) == 0)
     {
-        nwrote = write(conn->handler->fd, msg, len);
-		printf("nwrote:%ld, %d send_msg\n", nwrote, conn->handler->fd);
+        nwrote = write(conn->handler.fd, msg, len);
+		printf("nwrote:%ld, %d send_msg\n", nwrote, conn->handler.fd);
         if (nwrote >= 0)
         {
             remaining = len - nwrote;
@@ -122,9 +123,9 @@ void conn_send_in_loop(gp_connection *conn, char *msg, int len)
         //size_t oldLen = readable_bytes(conn->output_buffer);
 		//TODO high water mark
         buffer_append(conn->output_buffer, msg + nwrote, remaining);
-        if (!is_writing(conn->handler))
+        if (!is_writing(&conn->handler))
         {
-            enable_writing(conn->handler);
+            enable_writing(&conn->handler);
         }
     }
 }
@@ -151,7 +152,7 @@ void conn_send(gp_connection *conn, char *data, int len)
 
 void run_in_loop_shutdown(gp_server *server, gp_connection *conn, char *msg, int len)
 {
-	if(!is_writing(conn->handler))
+	if(!is_writing(&conn->handler))
 	{
 		shutdown(conn->fd, SHUT_WR);
 	}
@@ -173,7 +174,7 @@ void queue_in_loop_force_close(gp_server *server, gp_connection *conn, char *msg
 {
 	if(conn->state == k_connected || conn->state == k_disconnecting)
 	{	
-		connection_handler_close(conn->handler);
+		connection_handler_close(&conn->handler);
 	}
 }
 
@@ -190,20 +191,25 @@ void conn_force_close(gp_connection *conn)
 
 void destruct_gp_connection(gp_connection *conn)
 {
-	destruct_gp_handler(conn->handler);
+	gp_list_node_remove(&conn->handler.handler_node);
+    handler_remove(&conn->handler);
+    close(conn->handler.fd);
+
 	destruct_gp_buffer(conn->input_buffer);
 	destruct_gp_buffer(conn->output_buffer);
 	free(conn);
 }
 
-void init_gp_connection(gp_connection *conn, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
+void init_gp_connection(gp_connection *conn, gp_server *server, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
 {
 	conn->loop = loop;
+	conn->server = server;
 	conn->fd = fd;
 	conn->state = k_connecting;
 	conn->message_callback = NULL;
 	conn->connection_callback = NULL;
 	conn->write_complete_callback = NULL;
+	conn->conn_pri = NULL;
 	gp_atomic_set(&conn->ref, 1);
 
     init_gp_sock_address_by_sockaddr(&conn->local_addr, localaddr);
@@ -215,21 +221,21 @@ void init_gp_connection(gp_connection *conn, gp_loop *loop, int32_t fd, struct s
     get_gp_sock_address(&conn->peer_addr, peer, 40);
     printf("fd:%d, connection:%s->%s\n", conn->fd, peer, local);
 
-	create_gp_handler(&conn->handler, loop, fd);
+	init_gp_handler(&conn->handler, loop, fd);
 	create_gp_buffer(&conn->input_buffer);
 	create_gp_buffer(&conn->output_buffer);
 
-	set_read_callback(conn->handler, connection_handler_read);
-	set_write_callback(conn->handler, connection_handler_write);
-	set_close_callback(conn->handler, connection_handler_close);
-	set_error_callback(conn->handler, connection_handler_error);
+	set_read_callback(&conn->handler, connection_handler_read);
+	set_write_callback(&conn->handler, connection_handler_write);
+	set_close_callback(&conn->handler, connection_handler_close);
+	set_error_callback(&conn->handler, connection_handler_error);
 }
 
-void create_gp_connection(gp_connection **connection, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
+void create_gp_connection(gp_connection **connection, gp_server *server, gp_loop *loop, int32_t fd, struct sockaddr *localaddr, struct sockaddr *peeraddr)
 {
 	gp_connection *tmp = malloc(sizeof(gp_connection));
 	memset(tmp, 0, sizeof(*tmp));
-	init_gp_connection(tmp, loop, fd, localaddr, peeraddr);
+	init_gp_connection(tmp, server, loop, fd, localaddr, peeraddr);
 	*connection = tmp;
 }
 

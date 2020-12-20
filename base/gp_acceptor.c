@@ -1,8 +1,13 @@
 #include "gp.h"
 
+
+gp_acceptor * get_acceptor_from_handler(gp_handler *handler){
+        return container_of(handler, gp_acceptor, accept_handler);
+}
+
 static void acceptor_read_callback(gp_handler *handler)
 {
-        gp_acceptor * acceptor = get_server()->acceptor;
+        gp_acceptor * acceptor = get_acceptor_from_handler(handler);
 
         struct sockaddr addr;
         bzero(&addr, sizeof addr);
@@ -20,7 +25,7 @@ static void acceptor_read_callback(gp_handler *handler)
         }
 
         if(connfd > 0){
-                acceptor->new_connection_callback(connfd, &addr);
+                acceptor->new_connection_callback(acceptor, connfd, &addr);
         }else{
                 close(handler->fd);	
         }
@@ -37,7 +42,7 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *soc
         acceptor->listenning = 0;
         acceptor->fd = socket(((struct sockaddr *)sock_address)->sa_family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0); 
         printf("listen fd:%d\n", acceptor->fd);
-        create_gp_handler(&acceptor->accept_handler, loop, acceptor->fd);
+        init_gp_handler(&acceptor->accept_handler, loop, acceptor->fd);
 
         int32_t optval = 1;
         setsockopt(acceptor->fd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)(sizeof optval));
@@ -55,7 +60,7 @@ void init_gp_acceptor(gp_acceptor *acceptor, gp_loop *loop, gp_sock_address *soc
         }
         printf("bind address:%s\n", address);
 
-        set_read_callback(acceptor->accept_handler, acceptor_read_callback);
+        set_read_callback(&acceptor->accept_handler, acceptor_read_callback);
 }
 
 void create_gp_acceptor(gp_acceptor **acceptor, gp_loop *loop, gp_sock_address *sock_address)
@@ -75,5 +80,5 @@ void acceptor_listen(gp_acceptor *acceptor)
                 printf("errno:%d, %s\n",errno, strerror(errno));
                 abort();
         }
-        enable_reading(acceptor->accept_handler);
+        enable_reading(&acceptor->accept_handler);
 }

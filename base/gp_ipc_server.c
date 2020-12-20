@@ -35,18 +35,16 @@ void on_connection(gp_connection *conn)
 
 void gp_ipc_start_server(gp_ipc_server *server)
 {
-	start_server(server->server);
+	start_server(&server->server);
 }
 
 void init_gp_ipc_server(gp_ipc_server *tcp_server, gp_loop *loop, gp_sock_address *address, char *name)
 {
-	gp_server *server = get_server();
+    init_gp_server(&tcp_server->server, loop, address, "gp_ipc");
 	tcp_server->loop = loop;
-	tcp_server->server = server;
-	init_gp_server(server, loop, address, "gp_ipc");
-	
-	server_set_message_callback(server, on_message);
-	server_set_connection_callback(server, on_connection);
+
+	server_set_message_callback(&tcp_server->server, on_message);
+	server_set_connection_callback(&tcp_server->server, on_connection);
 }
 
 void create_gp_ipc_server(gp_ipc_server **server, gp_loop *loop, gp_sock_address *address, char *name)

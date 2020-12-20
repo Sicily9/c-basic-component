@@ -3,4 +3,4 @@ file(GLOB DIR_SRCS "./*.c" )
 
 add_library (base SHARED ${DIR_SRCS})
 
-target_link_libraries(base pthread yaml protobuf-c)
+target_link_libraries(base pthread yaml protobuf-c ssl crypto)
