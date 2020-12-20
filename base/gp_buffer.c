@@ -4,8 +4,8 @@
 #include <sys/uio.h>
 
 const int32_t k_cheap_prepend = 8;
-const int32_t k_initial_size = 8192;
-
+//const int32_t k_initial_size = 8192;
+const int32_t k_initial_size = 100;
 void init_gp_buffer(gp_buffer *buffer)
 {
 	buffer->buffer = malloc(k_cheap_prepend + k_initial_size);

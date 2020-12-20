@@ -31,7 +31,7 @@ uint32_t ssl_protobuf_default_callback(gp_connection *conn, ProtobufCMessage *ms
 
 void handle_ssl_msg(gp_connection *conn, gp_buffer *buffer)
 {
-    while (readable_bytes(buffer) >= 8)
+    if (readable_bytes(buffer) >= 8)
     {   
         ProtobufCMessage *msg = decode(buffer);
         if(msg){
@@ -75,7 +75,7 @@ void ssl_handler_handshake(gp_handler *handler)
         enable_reading(&conn->handler);
         disable_writing(&conn->handler);
     } else {
-        printf("want read123!!!\n");
+        printf("ssl_handler_handshake err!!!\n");
         ERR_print_errors_fp(stderr);
         //connection_handler_close(handler);
     }
@@ -119,35 +119,36 @@ void ssl_handler_close(gp_handler *handler)
 
 void ssl_handler_read(gp_handler *handler)
 {
-    struct timeval start, end;
-    gettimeofday(&start, NULL); 
     gp_connection *conn = get_connection_from_handler(handler);
 
     int writable = writable_bytes(conn->input_buffer);
+    printf("writable:%d\n", writable);
     char *buf = conn->input_buffer->buffer + conn->input_buffer->writer_index;
     int n = SSL_read(conn->conn_pri, buf, writable);
 
     int err = SSL_get_error(conn->conn_pri, n);
     if (n < 0) {
+        printf("error:%d %d\n", n, err);
         ERR_print_errors_fp(stderr);
     } else if (n > 0 ){
         if( n < writable){
             conn->input_buffer->writer_index += n;
         } else {
             conn->input_buffer->writer_index = conn->input_buffer->len;
-            ensure_writable_bytes(conn->input_buffer, (int)(0.5 * conn->input_buffer->len));
+            int len = (int)(0.5 * conn->input_buffer->len);
+            printf("add len :%d\n", len);
+            ensure_writable_bytes(conn->input_buffer, len);
+            printf("after add len :%ld\n", conn->input_buffer->len);
         }
 		conn_ref_inc(&conn);
 		conn->message_callback(conn, conn->input_buffer);
 		conn_ref_dec(&conn);
     } else {
+        printf("error:%d %d\n", n, err);
         ssl_handler_close(handler);
         ERR_print_errors_fp(stderr);
         return ;
     }
-    gettimeofday(&end, NULL); 
-	long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-	printf("handle: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
 }
 
 void ssl_connection_init(gp_connection *conn)

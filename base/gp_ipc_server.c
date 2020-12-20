@@ -11,7 +11,7 @@ uint32_t protobuf_default_callback(gp_connection *conn, ProtobufCMessage *msg)
 
 void on_message(gp_connection *conn, gp_buffer *buffer)
 {
-    while (readable_bytes(buffer) >= 8)
+    if (readable_bytes(buffer) >= 8)
     {   
         ProtobufCMessage *msg = decode(buffer);
         if(msg){
