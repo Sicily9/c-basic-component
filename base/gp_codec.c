@@ -101,20 +101,20 @@ ProtobufCMessage * decode(gp_buffer *buffer)
 
                 int32_t name_len = read_int32(buffer);
             
-		        char * name = read_str(buffer, name_len);
-		        ProtobufCMessageDescriptor* desc = dictFetchValue(get_pb_map(), name);
-		        if(unlikely(desc == NULL)){
-		                printf("%s msg, haven't registered we don't handle\n", name);
+		char * name = read_str(buffer, name_len);
+		ProtobufCMessageDescriptor* desc = dictFetchValue(get_pb_map(), name);
+		if(unlikely(desc == NULL)){
+		        printf("%s msg, haven't registered we don't handle\n", name);
                         retrieve_all(buffer);  
-			            return NULL;
-		        }
+			return NULL;
+		}
                 free(name);
 
-		        ProtobufCMessage *msg = read_pb_msg(buffer, desc, len - 4 - name_len);
+		ProtobufCMessage *msg = read_pb_msg(buffer, desc, len - 4 - name_len);
 
-		        return msg;
-	    } else {
-            return NULL;  
+		return msg;
+	} else {
+                return NULL;  
         }
 }
 

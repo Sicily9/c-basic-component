@@ -622,6 +622,8 @@ extern void            conn_ref_dec(gp_connection **);
 extern void	             create_gp_buffer(gp_buffer **);
 extern void	             init_gp_buffer(gp_buffer *);
 extern void              destruct_gp_buffer(gp_buffer *);
+extern void              ensure_writable_bytes(gp_buffer *, size_t);
+extern void              has_written(gp_buffer *, size_t);
 extern size_t            readable_bytes(gp_buffer *);
 extern size_t            writable_bytes(gp_buffer *);
 extern size_t            prepenable_bytes(gp_buffer *);

@@ -20,19 +20,48 @@ void gp_set_ssl_cert_key(gp_ssl_server *ssl_server, char * cert, char *key)
 
 }
 
+uint32_t ssl_protobuf_default_callback(gp_connection *conn, ProtobufCMessage *msg)
+{
+    int port = 0;
+    char ip[20];
+    get_peer_address(conn->fd, ip, &port, 20);
+    printf("%s:%d send protobuf_msg name:%s,  unknown message type\n", ip, port, msg->descriptor->name);
+    return 0;
+}
+
+void handle_ssl_msg(gp_connection *conn, gp_buffer *buffer)
+{
+    while (readable_bytes(buffer) >= 8)
+    {   
+        ProtobufCMessage *msg = decode(buffer);
+        if(msg){
+            conn_ref_inc(&conn);
+            gp_protobuf_msg_callback cb = get_msg_callback(msg->descriptor->name);
+            if(likely(cb != NULL))
+                cb(conn, msg);
+            else
+                ssl_protobuf_default_callback(conn, msg);
+
+            protobuf_c_message_free_unpacked(msg, NULL);
+            conn_ref_dec(&conn);
+        }
+    }
+}
+
 gp_ssl_server* get_ssl_server_from_server(gp_server *server){
         return container_of(server, gp_ssl_server, server);
 }
 
-
 void ssl_handler_handshake(gp_handler *handler)
 {
 	gp_connection *conn = get_connection_from_handler(handler);
-	
+    gp_ssl_server *ssl_server = get_ssl_server_from_server(conn->server);
     int r = SSL_do_handshake(conn->conn_pri);
     if (r == 1) {
         printf("SSL_connected success\n");
         set_read_callback(&conn->handler, ssl_handler_read);
+        server_set_message_callback(&ssl_server->server, handle_ssl_msg);
+        conn_set_message_callback(conn, handle_ssl_msg);
         return;
     }
 
@@ -90,24 +119,35 @@ void ssl_handler_close(gp_handler *handler)
 
 void ssl_handler_read(gp_handler *handler)
 {
+    struct timeval start, end;
+    gettimeofday(&start, NULL); 
     gp_connection *conn = get_connection_from_handler(handler);
 
-    char buf[3]={0};
-    int n = SSL_read(conn->conn_pri, buf, sizeof(buf));
+    int writable = writable_bytes(conn->input_buffer);
+    char *buf = conn->input_buffer->buffer + conn->input_buffer->writer_index;
+    int n = SSL_read(conn->conn_pri, buf, writable);
+
     int err = SSL_get_error(conn->conn_pri, n);
-    if (n < 0 && err != SSL_ERROR_WANT_READ) {
+    if (n < 0) {
         ERR_print_errors_fp(stderr);
-    }
-
-    if(n == 0){
+    } else if (n > 0 ){
+        if( n < writable){
+            conn->input_buffer->writer_index += n;
+        } else {
+            conn->input_buffer->writer_index = conn->input_buffer->len;
+            ensure_writable_bytes(conn->input_buffer, (int)(0.5 * conn->input_buffer->len));
+        }
+		conn_ref_inc(&conn);
+		conn->message_callback(conn, conn->input_buffer);
+		conn_ref_dec(&conn);
+    } else {
         ssl_handler_close(handler);
+        ERR_print_errors_fp(stderr);
+        return ;
     }
-    ERR_print_errors_fp(stderr);
-}
-
-void handle_ssl_shake(gp_connection *conn, gp_buffer *buffer)
-{
-
+    gettimeofday(&end, NULL); 
+	long long total_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+	printf("handle: %lld us, %f ms\n", total_time, (double)total_time/1000.0);
 }
 
 void ssl_connection_init(gp_connection *conn)
@@ -147,7 +187,6 @@ void init_gp_ssl_server(gp_ssl_server *ssl_server, gp_loop *loop, gp_sock_addres
         exit(1);
     }
 
-	server_set_message_callback(&ssl_server->server, handle_ssl_shake);
 	server_set_connection_callback(&ssl_server->server, ssl_connection_init);
 }
 
