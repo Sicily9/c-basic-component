@@ -4,8 +4,8 @@
 #include <sys/uio.h>
 
 const int32_t k_cheap_prepend = 8;
-const int32_t k_initial_size = 8192;
-
+//const int32_t k_initial_size = 8192;
+const int32_t k_initial_size = 100;
 void init_gp_buffer(gp_buffer *buffer)
 {
 	buffer->buffer = malloc(k_cheap_prepend + k_initial_size);
@@ -91,14 +91,13 @@ static void make_space(gp_buffer *buffer, size_t len)
 		buffer->len = len + buffer->writer_index;
 	}else{
 		size_t readable = readable_bytes(buffer);
-
 		memmove(buffer->buffer + k_cheap_prepend, buffer->buffer + buffer->reader_index, readable_bytes(buffer));
 		buffer->reader_index = k_cheap_prepend;
 		buffer->writer_index = buffer->reader_index + readable;
 	}
 }
 
-static void ensure_writable_bytes(gp_buffer *buffer, size_t len)
+void ensure_writable_bytes(gp_buffer *buffer, size_t len)
 {
 	if(writable_bytes(buffer) < len)
 	{

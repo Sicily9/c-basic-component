@@ -1,16 +1,6 @@
 #include "gp.h"
 #include <sys/socket.h>
 
-gp_server *server = NULL;
-
-gp_server * get_server(void){
-	if(unlikely(server == NULL)){
-		server = malloc(sizeof(gp_server));
-	}
-	return server;
-}
-
-
 static void queue_in_loop_destroy_conn(gp_server * server, gp_connection *conn, char *msg, int len)
 {
 	connection_destroyed(conn);
@@ -25,14 +15,13 @@ static void run_in_loop_remove_conn(gp_server *server, gp_connection *conn, char
 
 void remove_conn(gp_connection *conn)
 {
-	gp_server *server = get_server();
-	dictDelete(server->connections, &conn->handler->fd);
+	dictDelete(conn->server->connections, &conn->handler.fd);
 	conn_ref_dec(&conn);
-	printf("remove conn from connections fd:%d\n", conn->handler->fd);
+	printf("remove conn from connections fd:%d\n", conn->handler.fd);
 
 	gp_pending_task *task = NULL;
-	create_gp_pending_task(&task, GP_RUN_IN_LOOP_REMOVE_CONN, run_in_loop_remove_conn, server, conn, NULL, 0);
-	gp_run_in_loop(server->loop, task);
+	create_gp_pending_task(&task, GP_RUN_IN_LOOP_REMOVE_CONN, run_in_loop_remove_conn, conn->server, conn, NULL, 0);
+	gp_run_in_loop(conn->server->loop, task);
 
 }
 
@@ -41,9 +30,13 @@ void run_in_loop_create_conn(gp_server * server, gp_connection *conn, char *msg,
 	connection_established(conn);
 }
 
-void new_connection_callback(int32_t sockfd, struct sockaddr *peer_addr)
+gp_server* get_server_from_acceptor(gp_acceptor *acceptor){
+        return container_of(acceptor, gp_server, acceptor);
+}
+
+void new_connection_callback(gp_acceptor *acceptor, int32_t sockfd, struct sockaddr *peer_addr)
 {
-	gp_server * server = get_server();
+	gp_server * server = get_server_from_acceptor(acceptor);
 	gp_loop *loop = server->loop;
 
 	struct sockaddr *local_addr = create_sockaddr(peer_addr);
@@ -52,7 +45,7 @@ void new_connection_callback(int32_t sockfd, struct sockaddr *peer_addr)
     getsockname(sockfd, local_addr, (socklen_t *)&len);
 
 	gp_connection *conn = NULL;
-	create_gp_connection(&conn, loop, sockfd, local_addr, peer_addr);
+	create_gp_connection(&conn, server, loop, sockfd, local_addr, peer_addr);
 	dictAdd(server->connections, &sockfd, conn); 
 	conn_ref_inc(&conn);
 
@@ -71,7 +64,7 @@ void new_connection_callback(int32_t sockfd, struct sockaddr *peer_addr)
 
 void run_in_loop_server_start(gp_server * server, gp_connection *conn, char *msg, int len)
 {
-	gp_acceptor *acceptor = server->acceptor;
+	gp_acceptor *acceptor = &server->acceptor;
 	acceptor_listen(acceptor);
 }
 
@@ -107,8 +100,8 @@ void init_gp_server(gp_server *server, gp_loop *loop, gp_sock_address *listen_ad
 	server->write_complete_callback = NULL;
 	server->connections = dictCreate(INT_DICT, 0);
 
-	create_gp_acceptor(&server->acceptor, server->loop, listen_addr);
-	set_new_connection_callback(server->acceptor, new_connection_callback);
+	init_gp_acceptor(&server->acceptor, server->loop, listen_addr);
+	set_new_connection_callback(&server->acceptor, new_connection_callback);
 }
 
 void create_gp_server(gp_server **server, gp_loop *loop, gp_sock_address *listen_addr, char *name)
