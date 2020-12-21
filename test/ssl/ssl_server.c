@@ -1,7 +1,7 @@
 #include "gp.h"
 
 #define LOCAL_CERT "server.pem"
-#define LOCAL_KEY "server.pem"
+#define LOCAL_KEY  "privkey.pem"
 
 int main()
 {	

@@ -2,13 +2,15 @@
 
 void gp_set_ssl_cert_key(gp_ssl_server *ssl_server, char * cert, char *key)
 {
-/* 载入用户的数字证书， 此证书用来发送给客户端。 证书里包含有公钥 */
-    if (SSL_CTX_use_certificate_file(ssl_server->ctx, cert, SSL_FILETYPE_PEM) <= 0) {
+
+    /* 载入用户私钥 */
+    if (SSL_CTX_use_PrivateKey_file(ssl_server->ctx, key, SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
-    /* 载入用户私钥 */
-    if (SSL_CTX_use_PrivateKey_file(ssl_server->ctx, key, SSL_FILETYPE_PEM) <= 0) {
+
+/* 载入用户的数字证书， 此证书用来发送给客户端。 证书里包含有公钥 */
+    if (SSL_CTX_use_certificate_file(ssl_server->ctx, cert, SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
@@ -128,8 +130,11 @@ void ssl_handler_read(gp_handler *handler)
 
     int err = SSL_get_error(conn->conn_pri, n);
     if (n < 0) {
-        printf("error:%d %d\n", n, err);
-        ERR_print_errors_fp(stderr);
+        char szErrMsg[1024] = {0};
+        ERR_error_string(err,szErrMsg);
+        printf("n:%d errno:%d errmsg:%s, err:%d msg:%s\n", n, errno, strerror(errno), err, szErrMsg);
+        if(errno == ECONNRESET)
+            ssl_handler_close(handler);
     } else if (n > 0 ){
         if( n < writable){
             conn->input_buffer->writer_index += n;
@@ -144,9 +149,9 @@ void ssl_handler_read(gp_handler *handler)
 		conn->message_callback(conn, conn->input_buffer);
 		conn_ref_dec(&conn);
     } else {
-        printf("error:%d %d\n", n, err);
-        ssl_handler_close(handler);
-        ERR_print_errors_fp(stderr);
+        char szErrMsg[1024] = {0};
+        ERR_error_string(err,szErrMsg);
+        printf("n:%d errno:%d errmsg:%s, err:%d msg:%s\n", n, errno, strerror(errno), err, szErrMsg);
         return ;
     }
 }
@@ -159,6 +164,7 @@ void ssl_connection_init(gp_connection *conn)
     SSL_set_fd(conn->conn_pri, conn->fd);
     SSL_set_accept_state(conn->conn_pri);
 
+    set_close_callback(&conn->handler, ssl_handler_close);
     set_read_callback(&conn->handler, ssl_handler_handshake);
     set_write_callback(&conn->handler, ssl_handler_handshake);
     printf("ssl connection init finish\n");
