@@ -8,8 +8,7 @@ uint32_t static_route_handler(gp_connection *conn, ProtobufCMessage *msg)
 	printf("static_route:{id:%d, interface_name:%s, dst_ip:%s, subnet_mask:%s, gateway:%s}\n", static_route->id, static_route->interface_name, static_route->dst_ip, static_route->subnet_mask, static_route->gateway);
 
 	char *str = "i receive the static_route msg";
-	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
-	conn_send(conn, "i receive the static_route msg", 8);
+	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }
 

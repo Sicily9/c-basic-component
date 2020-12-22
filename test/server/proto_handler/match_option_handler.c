@@ -8,7 +8,6 @@ uint32_t match_option_handler(gp_connection *conn, ProtobufCMessage *msg)
 	printf("match_option:{field:%s, match_rule:%d, expression:%s}\n", match_option->field, match_option->match_rule, match_option->expression);
 
 	char *str = "i receive the match_option msg";
-	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

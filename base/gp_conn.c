@@ -51,9 +51,7 @@ void connection_handler_read(gp_handler *handler)
 	gp_connection *conn = get_connection_from_handler(handler);
 	
 	int saved_errno = 0;
-	printf("buffer len:%ld\n", readable_bytes(conn->input_buffer));
 	size_t n = buffer_read_fd(conn->input_buffer, handler->fd, &saved_errno);
-	printf("after receive %ld bytes, buffer len:%ld\n", n, readable_bytes(conn->input_buffer));
 	if(n > 0)
 	{
 		conn_ref_inc(&conn);

@@ -28,7 +28,6 @@ uint32_t virtual_service_handler(gp_connection *conn, ProtobufCMessage *msg)
 	}
 
 	char *str = "i receive the virtual_service msg";
-	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }

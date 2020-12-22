@@ -8,7 +8,6 @@ uint32_t dns_config_handler(gp_connection *conn, ProtobufCMessage *msg)
 	printf("dns_config:{id:%d, interface_name:%s, host_name:%s, preferred_server:%s, alternative_server:%s}\n", dns_config->id, dns_config->interface_name, dns_config->host_name, dns_config->preferred_server, dns_config->alternative_server);
 
 	char *str = "i receive the dns_config msg";
-	printf("fd:%d, send msg:%s, len:%ld\n", conn->fd, str, strlen(str) + 1);
 	conn_send(conn, str, strlen(str) + 1);
 	return 0;
 }
