@@ -83,7 +83,7 @@ typedef void (*gp_close_callback)(gp_connection *);
 typedef void (*gp_write_complete_callback)(gp_connection *);
 typedef void (*gp_message_callback)(gp_connection *, gp_buffer*);
 typedef void (*gp_new_connection_callback)(gp_acceptor *, int32_t, struct sockaddr *);
-typedef void (*gp_pending_func)(gp_server *, gp_connection *, char *, int);
+typedef void (*gp_pending_func)(gp_pending_task *);
 typedef uint32_t (*gp_protobuf_msg_callback)(gp_connection *, ProtobufCMessage *);
 
 enum gp_run_mode_s{
@@ -229,8 +229,8 @@ struct gp_pending_task_s{
 	int8_t				type;
 	gp_pending_func		pending_func;
 
-	gp_server		*server;
-	gp_connection	*conn;
+	gp_server		    *server;
+	gp_connection	    *conn;
 	char				*msg;
 	int					len;
 	

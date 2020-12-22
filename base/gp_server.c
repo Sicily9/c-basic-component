@@ -1,33 +1,40 @@
 #include "gp.h"
 #include <sys/socket.h>
 
-static void queue_in_loop_destroy_conn(gp_server * server, gp_connection *conn, char *msg, int len)
+static void queue_in_loop_destroy_conn(gp_pending_task *task)
 {
-	connection_destroyed(conn);
+	connection_destroyed(task->conn);
 }
 
-static void run_in_loop_remove_conn(gp_server *server, gp_connection *conn, char *msg, int len)
+static void run_in_loop_remove_conn(gp_pending_task *task)
 {
-	gp_pending_task *task = NULL;
-	create_gp_pending_task(&task, GP_RUN_IN_LOOP_CONN, queue_in_loop_destroy_conn, NULL, conn, NULL, 0);
-	gp_queue_in_loop(server->loop, task);
+	printf("run in loop remove_conn, fd:%d\n", task->conn->fd);
+	gp_pending_task *new_task = NULL;
+	gp_server *server = task->conn->server;
+	create_gp_pending_task(&new_task, GP_RUN_IN_LOOP_CONN, queue_in_loop_destroy_conn, NULL, task->conn, NULL, 0);
+	gp_queue_in_loop(server->loop, new_task);
 }
 
 void remove_conn(gp_connection *conn)
 {
 	dictDelete(conn->server->connections, &conn->handler.fd);
 	conn_ref_dec(&conn);
-	printf("remove conn from connections fd:%d\n", conn->handler.fd);
 
 	gp_pending_task *task = NULL;
-	create_gp_pending_task(&task, GP_RUN_IN_LOOP_REMOVE_CONN, run_in_loop_remove_conn, conn->server, conn, NULL, 0);
+	create_gp_pending_task(&task, GP_RUN_IN_LOOP_REMOVE_CONN, run_in_loop_remove_conn, NULL, conn, NULL, 0);
 	gp_run_in_loop(conn->server->loop, task);
 
 }
 
-void run_in_loop_create_conn(gp_server * server, gp_connection *conn, char *msg, int len)
+void run_in_loop_create_conn(gp_pending_task *task)
 {
-	connection_established(conn);
+	char local[40] = {0};
+    get_gp_sock_address(&task->conn->local_addr, local, 40);
+    char peer[40] = {0};
+    get_gp_sock_address(&task->conn->peer_addr, peer, 40);
+    printf("run in loop create_conn, fd:%d, connection:%s->%s\n", task->conn->fd, peer, local);
+
+	connection_established(task->conn);
 }
 
 gp_server* get_server_from_acceptor(gp_acceptor *acceptor){
@@ -55,16 +62,15 @@ void new_connection_callback(gp_acceptor *acceptor, int32_t sockfd, struct socka
 	conn_set_close_callback(conn, remove_conn);
 
 	gp_pending_task *task = NULL;
-	printf("create conn pending_task\n");
 	create_gp_pending_task(&task, GP_RUN_IN_LOOP_CONN, run_in_loop_create_conn, NULL, conn, NULL, 0);
 	gp_run_in_loop(loop, task);
 
 	conn_ref_dec(&conn);
 }
 
-void run_in_loop_server_start(gp_server * server, gp_connection *conn, char *msg, int len)
+void run_in_loop_server_start(gp_pending_task *task)
 {
-	gp_acceptor *acceptor = &server->acceptor;
+	gp_acceptor *acceptor = &task->server->acceptor;
 	acceptor_listen(acceptor);
 }
 

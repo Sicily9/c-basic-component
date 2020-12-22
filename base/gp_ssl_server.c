@@ -111,11 +111,9 @@ void ssl_handler_close(gp_handler *handler)
 	gp_connection *conn = get_connection_from_handler(handler);
 	conn_ref_inc(&conn);
 
-	conn->state = k_disconnected;
-	disable_all(handler);
-	
-    SSL_free(conn->conn_pri);
     conn->close_callback(conn);
+    
+    SSL_free(conn->conn_pri);
 	conn_ref_dec(&conn);
 }
 
@@ -158,16 +156,20 @@ void ssl_handler_read(gp_handler *handler)
 
 void ssl_connection_init(gp_connection *conn)
 {
-    printf("ssl connection init\n");
-    gp_ssl_server *ssl_server = get_ssl_server_from_server(conn->server);
-    conn->conn_pri = SSL_new(ssl_server->ctx);
-    SSL_set_fd(conn->conn_pri, conn->fd);
-    SSL_set_accept_state(conn->conn_pri);
+    if(conn->state == k_connected){
+        printf("ssl connection init\n");
+        gp_ssl_server *ssl_server = get_ssl_server_from_server(conn->server);
+        conn->conn_pri = SSL_new(ssl_server->ctx);
+        SSL_set_fd(conn->conn_pri, conn->fd);
+        SSL_set_accept_state(conn->conn_pri);
 
-    set_close_callback(&conn->handler, ssl_handler_close);
-    set_read_callback(&conn->handler, ssl_handler_handshake);
-    set_write_callback(&conn->handler, ssl_handler_handshake);
-    printf("ssl connection init finish\n");
+        set_close_callback(&conn->handler, ssl_handler_close);
+        set_read_callback(&conn->handler, ssl_handler_handshake);
+        set_write_callback(&conn->handler, ssl_handler_handshake);
+        printf("ssl connection init finish\n");
+    } else if(conn->state == k_disconnected) {
+        printf("ssl connection over\n");
+    }
 }
 
 void gp_ssl_start_server(gp_ssl_server *server)

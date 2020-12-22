@@ -97,40 +97,16 @@ void gp_queue_in_loop(gp_loop *loop, gp_pending_task *task)
 void gp_run_in_loop(gp_loop *loop, gp_pending_task *task)
 {
 	if(is_in_loop_thread(loop)){
-    	switch(task->type)
-    	{
-        	case GP_RUN_IN_LOOP_TRANS:
-        	{
-				conn_ref_inc(&task->conn);
-            	task->pending_func(NULL, task->conn, task->msg, task->len);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_CONN:
-        	{
-				printf("run in loop conn_pending_task, fd:%d\n", task->conn->fd);
-				conn_ref_inc(&task->conn);
-            	task->pending_func(NULL, task->conn, NULL, 0);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_REMOVE_CONN:
-        	{
-				conn_ref_inc(&task->conn);
-            	task->pending_func(task->server, task->conn, NULL, 0);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_SERVER_START:
-        	{
-            	task->pending_func(task->server, NULL, NULL, 0);
-            	break;
-        	}
-        	default:
-        	{
-				break;
-        	}
-    	}
+		if(task->type == GP_RUN_IN_LOOP_TRANS ||
+		   task->type == GP_RUN_IN_LOOP_CONN ||
+		   task->type == GP_RUN_IN_LOOP_REMOVE_CONN
+		){
+			conn_ref_inc(&task->conn);
+            task->pending_func(task);
+			conn_ref_dec(&task->conn);		
+		} else if(task->type == GP_RUN_IN_LOOP_SERVER_START){
+			task->pending_func(task);
+		}
 		destruct_gp_pending_task(task);
 	}else{
 		gp_queue_in_loop(loop, task);
@@ -144,40 +120,15 @@ static void do_pending_functors(gp_loop *loop)
 	gp_pending_task *tmp = NULL;
 	GP_LIST_FOREACH_SAFE(&loop->pending_list, tmp, task)
 	{
-    	switch(task->type)
-    	{
-        	case GP_RUN_IN_LOOP_TRANS:
-        	{
-				printf("trans_pending_task, send msg\n");
-            	task->pending_func(NULL, task->conn, task->msg, task->len);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_CONN:
-        	{
-				printf("conn_pending_task, fd:%d\n", task->conn->fd);
-            	task->pending_func(NULL, task->conn, NULL, 0);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_REMOVE_CONN:
-        	{
-				printf("remove conn pending_task, fd:%d\n", task->conn->fd);
-            	task->pending_func(task->server, task->conn, NULL, 0);
-				conn_ref_dec(&task->conn);
-            	break;
-        	}
-        	case GP_RUN_IN_LOOP_SERVER_START:
-        	{
-				printf("conn_server_start\n");
-            	task->pending_func(task->server, NULL, NULL, 0);
-            	break;
-        	}
-        	default:
-        	{
-				break;
-        	}
-    	}
+		if(task->type == GP_RUN_IN_LOOP_TRANS ||
+		   task->type == GP_RUN_IN_LOOP_CONN ||
+		   task->type == GP_RUN_IN_LOOP_REMOVE_CONN
+		){
+            task->pending_func(task);
+			conn_ref_dec(&task->conn);// conn_ref_inc 在 queue_in_loop时
+		} else if(task->type == GP_RUN_IN_LOOP_SERVER_START){
+			task->pending_func(task);
+		}
 		destruct_gp_pending_task(task);
 	}
 	loop->calling_pending_functors = 0;

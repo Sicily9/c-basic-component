@@ -97,7 +97,6 @@ void conn_send_in_loop(gp_connection *conn, char *msg, int len)
     if (!is_writing(&conn->handler) && readable_bytes(conn->output_buffer) == 0)
     {
         nwrote = write(conn->handler.fd, msg, len);
-		printf("nwrote:%ld, %d send_msg\n", nwrote, conn->handler.fd);
         if (nwrote >= 0)
         {
             remaining = len - nwrote;
@@ -130,9 +129,10 @@ void conn_send_in_loop(gp_connection *conn, char *msg, int len)
     }
 }
 
-void run_in_loop_trans(gp_server *server, gp_connection *conn, char *msg, int len)
+void run_in_loop_trans(gp_pending_task *task)
 {
-	conn_send_in_loop(conn, msg, len);
+	printf("run in loop send, fd:%d, msg:%s, len:%d\n", task->conn->fd, task->msg, task->len);
+	conn_send_in_loop(task->conn, task->msg, task->len);
 }
 
 void conn_send(gp_connection *conn, char *data, int len)
@@ -150,11 +150,12 @@ void conn_send(gp_connection *conn, char *data, int len)
 	}
 }
 
-void run_in_loop_shutdown(gp_server *server, gp_connection *conn, char *msg, int len)
+void run_in_loop_shutdown(gp_pending_task *task)
 {
-	if(!is_writing(&conn->handler))
+	printf("run in loop shutdown, fd:%d\n", task->conn->fd);
+	if(!is_writing(&task->conn->handler))
 	{
-		shutdown(conn->fd, SHUT_WR);
+		shutdown(task->conn->fd, SHUT_WR);
 	}
 }
 
@@ -170,11 +171,11 @@ void conn_shutdown(gp_connection *conn)
 	}
 }
 
-void queue_in_loop_force_close(gp_server *server, gp_connection *conn, char *msg, int len)
+void queue_in_loop_force_close(gp_pending_task *task)
 {
-	if(conn->state == k_connected || conn->state == k_disconnecting)
+	if(task->conn->state == k_connected || task->conn->state == k_disconnecting)
 	{	
-		connection_handler_close(&conn->handler);
+		connection_handler_close(&task->conn->handler);
 	}
 }
 
@@ -214,12 +215,6 @@ void init_gp_connection(gp_connection *conn, gp_server *server, gp_loop *loop, i
 
     init_gp_sock_address_by_sockaddr(&conn->local_addr, localaddr);
     init_gp_sock_address_by_sockaddr(&conn->peer_addr, peeraddr);
-
-    char local[40] = {0};
-    get_gp_sock_address(&conn->local_addr, local, 40);
-    char peer[40] = {0};
-    get_gp_sock_address(&conn->peer_addr, peer, 40);
-    printf("fd:%d, connection:%s->%s\n", conn->fd, peer, local);
 
 	init_gp_handler(&conn->handler, loop, fd);
 	create_gp_buffer(&conn->input_buffer);
