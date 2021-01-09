@@ -1,7 +1,6 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <sys/time.h>
-
 #include "gp.h"
 
 /* Using dictEnableResize() / dictDisableResize() we make possible to

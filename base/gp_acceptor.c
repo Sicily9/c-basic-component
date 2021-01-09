@@ -1,6 +1,5 @@
 #include "gp.h"
 
-
 gp_acceptor * get_acceptor_from_handler(gp_handler *handler){
         return container_of(handler, gp_acceptor, accept_handler);
 }
