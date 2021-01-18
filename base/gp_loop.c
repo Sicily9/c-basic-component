@@ -176,9 +176,12 @@ int32_t init_gp_loop(gp_loop *loop)
 	return 0;
 }
 
-int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
+#define EVENT_LOOP_HZ 10 
+//ms
+
+int32_t gp_loop_run(gp_loop *loop)
 {
-	uint32_t timeout;
+	uint32_t timeout = 0;
 	gp_handler *tmp;
 	gp_handler *tmp2;
 
@@ -186,10 +189,8 @@ int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 	loop->quit 	  = 0;
 	while(loop->quit == 0){
 		gp_loop_run_timers(loop);
-		timeout = 0;
 
-		if((mode == GP_RUN_ONCE) || mode == GP_RUN_DEFAULT)
-			timeout = loop->timer_base->next_timer - loop->time;
+		timeout = loop->timer_base->next_timer - loop->time;
 
 		poller_poll(loop->epoller, timeout, &loop->active_handler_list);
 		gp_loop_update_time(loop);
@@ -199,13 +200,6 @@ int32_t gp_loop_run(gp_loop *loop, gp_run_mode mode)
 			gp_list_node_remove(&tmp->handler_node);
 		}
 		do_pending_functors(loop);
-		
-		if(mode == GP_RUN_ONCE) {
-			gp_loop_update_time(loop);
-			gp_loop_run_timers(loop);
-		}
-		if(mode == GP_RUN_ONCE || mode == GP_RUN_NOWAIT)
-			break;
 	}
 	loop->looping = 0;
 	return 0;

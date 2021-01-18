@@ -86,12 +86,6 @@ typedef void (*gp_new_connection_callback)(gp_acceptor *, int32_t, struct sockad
 typedef void (*gp_pending_func)(gp_pending_task *);
 typedef uint32_t (*gp_protobuf_msg_callback)(gp_connection *, ProtobufCMessage *);
 
-enum gp_run_mode_s{
-    GP_RUN_DEFAULT = 0,
-    GP_RUN_ONCE,
-    GP_RUN_NOWAIT
-};
-typedef enum gp_run_mode_s gp_run_mode;
 
 //doubly list
 struct gp_list_node_s {
@@ -504,7 +498,7 @@ typedef struct gp_conf_node_ {
 extern int32_t create_gp_loop(gp_loop **);
 extern int32_t init_gp_loop(gp_loop *); 
 
-extern int32_t gp_loop_run(gp_loop *, gp_run_mode);
+extern int32_t gp_loop_run(gp_loop *);
 extern void    gp_loop_timer_start(gp_loop *, void (*fn)(void *), void *, int32_t , int32_t );
 extern void    gp_loop_timer_stop(gp_timer_list *);
 extern void    gp_loop_timer_mod(gp_loop *, gp_timer_list *,uint32_t, int32_t, int32_t);

@@ -20,7 +20,7 @@ int main()
 
 	gp_ssl_start_server(server);
 	
-	gp_loop_run(loop, GP_RUN_DEFAULT);
+	gp_loop_run(loop);
 
 
 	return 0;

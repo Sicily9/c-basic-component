@@ -1,5 +1,11 @@
 #include "guish_server.h"
 
+static void func(void *data)
+{
+	gp_loop *loop = data;
+	printf("system time:%u\n",loop->time);
+}
+
 int main()
 {	
 	printf("EPOLL_CTL_ADD:1 EPOLL_CTL_MOD:3 EPOLL_CTL_DEL:2\n");
@@ -15,7 +21,10 @@ int main()
 
 	guish_start_server(server);
 	
-	gp_loop_run(loop, GP_RUN_DEFAULT);
+
+
+	gp_loop_timer_start(loop, func, loop, 1000, 1);
+	gp_loop_run(loop);
 
 	return 0;
 }
