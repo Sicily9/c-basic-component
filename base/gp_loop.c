@@ -177,7 +177,8 @@ int32_t init_gp_loop(gp_loop *loop)
 }
 
 #define EVENT_LOOP_HZ 10 
-//ms
+//可以选择，使用一个固定的频率来驱动此网络库的运行，如10ms的话就是每次epoll_wait的timeout参数就是10
+//也可以选择 每次精准计算next_timer的时间值，传给epoll_wait
 
 int32_t gp_loop_run(gp_loop *loop)
 {
@@ -191,7 +192,6 @@ int32_t gp_loop_run(gp_loop *loop)
 		gp_loop_run_timers(loop);
 
 		timeout = loop->timer_base->next_timer - loop->time;
-
 		poller_poll(loop->epoller, timeout, &loop->active_handler_list);
 		gp_loop_update_time(loop);
 
