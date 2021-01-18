@@ -75,5 +75,5 @@ void gp_ipc_start(void)
 
     gp_ipc_start_server(server);
 
-    gp_loop_run(loop, GP_RUN_DEFAULT);
+    gp_loop_run(loop);
 }

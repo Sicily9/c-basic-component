@@ -2,8 +2,7 @@
 
 static void func(void *data)
 {
-	gp_loop *loop = data;
-	printf("system time:%u\n",loop->time);
+	printf("hello\n");
 }
 
 int main()
